@@ -1,0 +1,19 @@
+# Companies polled through their public job-board APIs (no login, no scraping).
+# Add a slug: it's the part after the domain in the company's careers URL,
+# e.g. jobs.lever.co/<slug>, boards.greenhouse.io/<slug>, jobs.ashbyhq.com/<slug>
+greenhouse: [stripe, airbnb, databricks, figma, robinhood, cloudflare, coinbase, discord, dropbox, gitlab,
+  instacart, lyft, pinterest, reddit, twilio, asana, druva, hackerrank, inmobi, scaleai, anthropic, vercel, duolingo]
+lever: [spotify, cred, meesho, zeta, paytm, porter, fampay, nium]
+ashby: [openai, ramp, notion, linear, cursor, perplexity, supabase, posthog, sarvam, replit, modal, elevenlabs,
+  cohere, clickhouse]
+
+# Workday career sites (big tech). Find these in the URL of a company's careers page:
+#   https://<host>/<site>  and tenant = first part of host
+workday:
+  - {company: NVIDIA, host: nvidia.wd5.myworkdayjobs.com, tenant: nvidia, site: NVIDIAExternalCareerSite}
+  - {company: Salesforce, host: salesforce.wd12.myworkdayjobs.com, tenant: salesforce, site: External_Career_Site}
+  - {company: Adobe, host: adobe.wd5.myworkdayjobs.com, tenant: adobe, site: external_experienced}
+  - {company: Intel, host: intel.wd1.myworkdayjobs.com, tenant: intel, site: External}
+  - {company: Mastercard, host: mastercard.wd1.myworkdayjobs.com, tenant: mastercard, site: CorporateCareers}
+  - {company: PayPal, host: paypal.wd1.myworkdayjobs.com, tenant: paypal, site: jobs}
+  - {company: Cisco, host: cisco.wd5.myworkdayjobs.com, tenant: cisco, site: Cisco_Careers}

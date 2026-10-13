@@ -1,0 +1,7 @@
+requests
+pyyaml
+python-dotenv
+psycopg[binary]
+python-jobspy
+pytest
+beautifulsoup4

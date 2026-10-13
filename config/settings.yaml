@@ -1,0 +1,56 @@
+mode: internship            # internship | job  (job = new-grad / SDE-1 filters)
+
+# A job is kept if its location contains any of these (case-insensitive).
+locations: [India, Bengaluru, Bangalore, Hyderabad, Pune, Chennai, Mumbai, Gurgaon, Gurugram, Noida, Delhi]   # countryless "Remote" is always allowed
+allow_any_location: false   # true = also keep US/EU roles
+
+title_include: [intern, internship, trainee, apprentice, co-op, "summer analyst"]
+title_exclude: [senior, staff, principal, lead, manager, director, phd, "post-doc", postdoc, mba, sales, marketing, legal, recruit, "account executive", hr ]
+job_mode_include: [new grad, graduate, "sde 1", "sde i", "software engineer i", entry level, associate engineer]
+
+max_age_days: 30            # ignore postings older than this
+
+match:
+  prefilter_keep: 0.4       # keep the top 40% by vector similarity for scoring
+  llm_max_per_run: 25       # cap LLM calls per run (local model is slow)
+  alert_threshold: 70
+  hot_threshold: 85
+  max_alerts_per_run: 10
+
+jobspy:
+  enabled: true
+  sites: [linkedin, indeed, naukri, glassdoor, google]
+  search_terms: [software engineer intern, security intern]   # keep short: LinkedIn rate-limits (429)
+  location: India
+  results_wanted: 25
+  hours_old: 72
+
+simplify:
+  enabled: true
+  url: https://raw.githubusercontent.com/SimplifyJobs/Summer2027-Internships/dev/.github/scripts/listings.json
+
+sources:
+  internshala: [computer-science-internship, python-django-internship, web-development-internship,
+                machine-learning-internship, cyber-security-internship, data-science-internship, backend-development-internship]
+  unstop: [software, developer, security, machine learning, data]
+  amazon: [IND]            # ISO-3 country codes; add USA etc. if allow_any_location
+  remotive: true
+  remoteok: true
+  hn: true                 # Hacker News "Who is hiring?" posts that mention interns
+
+outreach:
+  daily_cap: 15            # max emails sent per day (cold + follow-ups)
+  followup_days: 5         # one follow-up if no reply after this many days, then stop
+  max_followups: 1
+  word_range: [90, 150]    # cold email body length
+  sender_name: Deepanshu Agarwal
+
+apply:
+  answers: profile/answers.yaml
+
+tracking:
+  gmail_query_days: 14     # how far back to scan your inbox for application updates
+
+digest:
+  hour: 21                 # daily digest at 21:00 local time
+  weekly_day: sun          # weekly review report

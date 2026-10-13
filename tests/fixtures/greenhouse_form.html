@@ -1,0 +1,19 @@
+<!doctype html><html><body>
+<h1>Software Engineering Intern</h1>
+<form id="application-form" action="javascript:void(0)" onsubmit="window.SUBMITTED = true; return false;">
+  <div class="field"><label for="first_name">First Name *</label><input id="first_name" name="first_name" required></div>
+  <div class="field"><label for="last_name">Last Name *</label><input id="last_name" name="last_name" required></div>
+  <div class="field"><label for="email">Email *</label><input id="email" type="email" name="email" required></div>
+  <div class="field"><label for="phone">Phone</label><input id="phone" type="tel" name="phone"></div>
+  <div class="field"><label for="resume">Resume/CV *</label><input id="resume" type="file" name="resume"></div>
+  <div class="field"><label for="cover_letter">Cover Letter</label><input id="cover_letter" type="file" name="cover_letter"></div>
+  <div class="field"><label for="q_linkedin">LinkedIn Profile</label><input id="q_linkedin" name="q1"></div>
+  <div class="field"><label for="q_school">School *</label><input id="q_school" name="q2" required></div>
+  <div class="field"><label for="q_grad">Graduation Year *</label>
+    <select id="q_grad" name="q3"><option value="">Select...</option><option>2026</option><option>2027</option><option>2028</option></select></div>
+  <div class="field"><label for="q_sponsor">Will you now or in the future require visa sponsorship? *</label>
+    <select id="q_sponsor" name="q4" required><option value="">Select...</option><option>Yes</option><option>No</option></select></div>
+  <div class="field"><label for="q_why">Why do you want to work at Acme? *</label><textarea id="q_why" name="q5" required></textarea></div>
+  <div class="field"><label for="q_gender">Gender</label><select id="q_gender" name="gender"><option value="">Decline</option><option>Male</option></select></div>
+  <button type="submit">Submit Application</button>
+</form></body></html>

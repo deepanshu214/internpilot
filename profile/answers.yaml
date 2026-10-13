@@ -1,0 +1,32 @@
+# Answers used to pre-fill application forms. Each rule's `match` is a regex tested (case-insensitive)
+# against the field's label; the first matching rule wins. `{placeholders}` come from profile.yaml.
+# An empty value means "leave this for me": the field is outlined in orange for you to answer.
+rules:
+  # Identity & links
+  - {match: "first name|given name|preferred name", value: "{first_name}"}
+  - {match: "last name|surname|family name", value: "{last_name}"}
+  - {match: "^name\\s*\\*?$|full name|your name|candidate name", value: "{name}"}
+  - {match: "e-?mail", value: "{email}"}
+  - {match: "phone|mobile|contact number|whatsapp", value: "{phone}"}
+  - {match: "linkedin", value: "{linkedin}"}
+  - {match: "github", value: "{github}"}
+  - {match: "website|portfolio|personal (site|url)|other (link|url)", value: "{github}"}
+  # Education
+  - {match: "school|university|college|institution", value: "Vellore Institute of Technology"}
+  - {match: "discipline|major|field of study|branch|specialization", value: "Computer Science and Engineering (Information Security)"}
+  - {match: "degree|qualification", value: "B.Tech"}
+  - {match: "graduation (year|date)|expected graduation|year of (passing|graduation)|batch|class of", value: "{grad_year}"}
+  - {match: "\\bc?gpa\\b|cgpa|cumulative grade", value: "8.69"}
+  - {match: "current (year|semester) of study|year of study", value: "3rd year"}
+  # Location & logistics
+  - {match: "current (city|location)|^city|^location|where are you (based|located)", value: "Vellore, Tamil Nadu, India"}
+  - {match: "^country", value: "India"}
+  - {match: "(legally )?(authori[sz]ed|eligible) to work in india", value: "Yes"}
+  - {match: "how did you hear|where did you (hear|find)|referral source", value: "Company careers page"}
+  - {match: "notice period", value: "Available immediately (student)"}
+  - {match: "current (company|employer)", value: "Vellore Institute of Technology (student)"}
+  # Always left for you (don't auto-answer these)
+  - {match: "sponsor|visa|work permit|authori[sz]ed to work in (the )?(us|united states|uk|canada)", value: ""}
+  - {match: "salary|stipend|compensation|ctc|expected pay", value: ""}
+  - {match: "start date|available to start|availability|duration", value: ""}
+  - {match: "gender|pronoun|race|ethnic|veteran|disabilit|hispanic|latino|sexual orientation", value: ""}
