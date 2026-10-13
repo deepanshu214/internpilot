@@ -1,19 +1,80 @@
-# InternPilot: setup checklist (things only you can do)
+# InternPilot: setup checklist (the parts only you can do)
 
-Work top to bottom. Each step says how to check it worked.
+Everything else is built and tested (45 tests). Work top to bottom; each step ends with a ✅ check.
+Total: about 60–75 minutes. Steps 1–4 already give you a working system; 5–8 add the cloud dashboard and email.
 
-## 1. Telegram alerts (5 min)
-1. In Telegram, message **@BotFather** → `/newbot` → copy the token.
-2. `cd ~/Desktop/internpilot && cp .env.example .env` and set `TELEGRAM_BOT_TOKEN=` in `.env`.
-3. Send any message to your new bot, then run:
-   `.venv/bin/python scripts/telegram_chat_id.py` → put the number in `TELEGRAM_CHAT_ID=`.
-- ✅ Check: `.venv/bin/python -m worker.scheduler --once` sends alerts to your phone.
+All commands run from the project folder:
+```bash
+cd ~/Desktop/internpilot && cp -n .env.example .env
+```
 
-## 2. Local LLM (15 min, ~5 GB download)
-`brew install ollama && brew services start ollama && ollama pull qwen2.5:7b && ollama pull nomic-embed-text`
-- ✅ Check: the run log says `llm: ollama`.
-- Optional: a free Groq key from console.groq.com → `GROQ_API_KEY=` (used when Ollama is off).
+---
 
-## 3. Review your profile (10 min)
-Open `profile/profile.yaml`: add your LinkedIn URL and the project GitHub links, and fix anything wrong.
-This file is the only source the resume tailor is allowed to use.
+## 1. Review your profile (10 min). Do this first.
+Everything is generated from `profile/profile.yaml`, and the resume tailor may never add anything that isn't in it.
+- Add your **LinkedIn URL** under `links:`, plus the **GitHub URLs** of MoodSpace, Margdarshak and Secure IPC (`url:`).
+- Check every bullet is true and phrased how you like it.
+- Skim `profile/answers.yaml` (the form-filling answers bank).
+- ✅ `.venv/bin/python -m pytest -q` still passes.
+
+## 2. Telegram alerts + buttons (5 min)
+1. In Telegram, message **@BotFather** → `/newbot` → copy the token into `.env` as `TELEGRAM_BOT_TOKEN=`.
+2. Send any message to your new bot, then run `.venv/bin/python scripts/telegram_chat_id.py` → put the number in `TELEGRAM_CHAT_ID=`.
+- ✅ `.venv/bin/python -m worker.scheduler --once` → alerts arrive with **✅ Shortlist & prepare / ⏭ Skip** buttons.
+
+## 3. Local LLM (15 min, ~5 GB download)
+```bash
+brew install ollama && brew services start ollama
+ollama pull qwen2.5:7b && ollama pull nomic-embed-text
+```
+- ✅ The run log says `llm: ollama`, and scores show "scored by ollama" in the dashboard.
+- Optional: a free key from console.groq.com → `GROQ_API_KEY=`. It's used when Ollama is off.
+
+## 4. Start the always-on worker (2 min)
+```bash
+./scripts/install_launchd.sh
+```
+- ✅ `tail -f logs/worker.log` shows `worker started`, and the dashboard sidebar says **Worker online**.
+- Local dashboard any time: `cd web && npm run dev` → http://localhost:3000
+
+## 5. Gmail: reply tracking, job-alert emails, sending (15 min)
+1. https://console.cloud.google.com → create a project "InternPilot".
+2. **APIs & Services → Library → Gmail API → Enable**.
+3. **OAuth consent screen**: External, app name InternPilot, your email. Under **Test users**, add `deepanshuagarwal10b@gmail.com`.
+4. **Credentials → Create credentials → OAuth client ID → Desktop app**. Download the JSON and save it as
+   `secrets/gmail_credentials.json`.
+5. Run `.venv/bin/python scripts/gmail_auth.py` and approve in the browser (it only asks to *send* and *read*).
+- ✅ It prints `Authorized as deepanshuagarwal10b@gmail.com`.
+- Then on the OAuth consent screen click **Publish app → In production**. Ignore the "verification" notice: it's fine for
+  personal use. In *Testing* mode, Google expires the login every 7 days.
+- Outreach stays a **dry run** (emails are written to `outbox/*.eml`, nothing sent) until you set `DRY_RUN=0` in `.env`.
+  Approve one email in the dashboard first, open the `.eml`, and only then switch it on.
+
+## 6. Job alerts for platforms with no public feed (10 min)
+Create job alerts, delivered to this Gmail, on: **LinkedIn** (Jobs → search "intern" + India → *Set alert*), **Wellfound**,
+**Naukri**, **Instahyre**, **Cutshort**, **Internshala**. The worker parses those emails into your inbox automatically.
+
+## 7. Supabase database (10 min). Needed for the dashboard on your phone.
+1. https://supabase.com → New project "internpilot" (free tier, region **Mumbai**). Save the DB password.
+2. **Project Settings → Database → Connection string**:
+   - **Session pooler** URI (port 5432) → `.env` as `DATABASE_URL=` (used by the worker)
+   - **Transaction pooler** URI (port 6543) → for Vercel (step 8)
+3. Copy what you've collected so far: `.venv/bin/python scripts/copy_to_supabase.py`
+4. Restart the worker: `./scripts/install_launchd.sh`
+- ✅ The script prints row counts (about 500 jobs).
+
+## 8. Deploy the dashboard to Vercel (10 min)
+1. Push this repo to a **private** GitHub repo (it contains your phone number).
+2. Vercel → Add New Project → import it → **Root Directory: `web`**.
+3. Environment variables:
+   - `DATABASE_URL` = the **Transaction pooler** URI from 7.2
+   - `DASHBOARD_PASSWORD` = a strong password
+   - `DASHBOARD_SECRET` = the output of `openssl rand -hex 32`
+4. Deploy, then put the URL in `.env` as `DASHBOARD_URL=` (makes the Telegram "Dashboard" buttons work) and restart the worker.
+- ✅ The deployed URL asks for your password, then shows your inbox.
+
+## 9. Optional extras
+- **Hunter.io** free key (25 lookups/month, finds real recruiter emails) → `HUNTER_API_KEY=`.
+- First real autofill: in the dashboard open a Greenhouse or Lever job → **Open & autofill on Mac**. A browser opens,
+  fills the form, outlines what needs you in orange, and outlines Submit in red. **You** check everything and submit.
+- Tune `config/settings.yaml`: locations, search terms, `alert_threshold`, `daily_cap`. Use `mode: job` later for full-time roles.

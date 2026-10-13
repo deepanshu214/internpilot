@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 from .config import DATABASE_URL, ROOT, SQLITE_PATH
 
 SCHEMA = (ROOT / "supabase/migrations/001_init.sql").read_text()
+PG_ONLY = (ROOT / "supabase/migrations/postgres_only.sql").read_text()
 _TABLE = re.compile(r"create table if not exists (\w+) \((.*?)\n\);", re.S)
 
 
@@ -83,6 +84,9 @@ class DB:
     def migrate(self):
         for stmt in filter(str.strip, SCHEMA.split(";")):
             self.execute(stmt)
+        if self.pg:
+            for stmt in filter(str.strip, PG_ONLY.split(";")):
+                self.execute(stmt)
         # Add columns introduced after a table was first created.
         for table, cols in schema_columns().items():
             if self.pg:
