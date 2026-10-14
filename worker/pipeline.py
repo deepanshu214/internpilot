@@ -33,7 +33,10 @@ def run_once(db: DB | None = None, settings=SETTINGS) -> dict:
     for row in db.pending_alerts(cfg["alert_threshold"], cfg["max_alerts_per_run"]):
         if telegram.alert(row):
             sent.append(row["id"])
-    db.mark_notified(sent)
+    # Only mark as notified when it really reached your phone; console previews (no Telegram yet) don't count,
+    # so the best matches are still delivered once you connect the bot.
+    if telegram.enabled():
+        db.mark_notified(sent)
 
     summary = {"fetched": len(fetched), "kept": len(kept), "new": len(new_jobs), "alerted": len(sent),
                "failed_sources": [k for k, v in counts.items() if v < 0]}

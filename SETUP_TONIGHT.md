@@ -4,6 +4,9 @@ Everything else is built and tested (45 tests). Work top to bottom; each step en
 Total: about 60–75 minutes. Steps 1–4 already give you a working system; 5–8 add the cloud dashboard and email.
 
 > **Never get charged:** see the bottom of this file. Short version: never add a payment method anywhere.
+>
+> **Check your progress any time:** `.venv/bin/python scripts/doctor.py` shows ✅/❌ for every step, with the next action.
+> It only makes free read-only calls, so it uses no AI quota and sends nothing.
 
 All commands run from the project folder:
 ```bash

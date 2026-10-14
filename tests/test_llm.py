@@ -24,14 +24,14 @@ def ok(text='{"score": 77}', tokens=1234, headers=None):
 
 
 @pytest.fixture
-def env(monkeypatch, tmp_path):
+def env(monkeypatch, tmp_path, make_db):
     monkeypatch.setattr(llm, "GROQ_API_KEY", "gsk_test")
     monkeypatch.setattr(llm, "GEMINI_API_KEY", "gem_test")
     monkeypatch.setattr(llm, "ollama_available", lambda: False)
     monkeypatch.setattr(llm, "_gemini_model", None)
     sent = []
     monkeypatch.setattr(telegram, "send", lambda text, buttons=None: sent.append(text) or True)
-    db = DB(url="", sqlite_path=str(tmp_path / "t.db"))
+    db = make_db()
     monkeypatch.setattr(llm, "LEDGER", llm.Ledger())
     llm.use_db(db)
     calls = []

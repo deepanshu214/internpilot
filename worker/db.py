@@ -176,8 +176,10 @@ class DB:
 
     # --- tasks ------------------------------------------------------------
     def enqueue(self, kind: str, job_id: str | None = None, payload: dict | None = None) -> str:
-        row = self.insert("tasks", {"kind": kind, "job_id": job_id, "payload": payload or {},
-                                    "status": "queued", "created_at": now()})
+        # Microsecond timestamps: tasks queued in the same second must still run in order
+        # (prepare → tailor → find_contacts → draft_outreach).
+        row = self.insert("tasks", {"kind": kind, "job_id": job_id, "payload": payload or {}, "status": "queued",
+                                    "created_at": datetime.now(timezone.utc).isoformat(timespec="microseconds")})
         return row["id"]
 
     def next_task(self) -> dict | None:

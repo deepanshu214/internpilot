@@ -46,7 +46,8 @@ Setup steps that need your accounts: **[SETUP_TONIGHT.md](SETUP_TONIGHT.md)**.
 .venv/bin/python -m worker.agent                # the always-on worker (what launchd runs)
 ./scripts/install_launchd.sh                    # install/restart the worker in the background
 cd web && npm run dev                           # dashboard on http://localhost:3000
-.venv/bin/python -m pytest -q                   # 45 tests
+.venv/bin/python scripts/doctor.py              # setup checker: ✅/❌ per step, free read-only calls
+.venv/bin/python -m pytest -q                   # 55 tests (TEST_DATABASE_URL=<local postgres> runs them on Postgres)
 ```
 
 ## Layout

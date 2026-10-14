@@ -7,12 +7,12 @@ from worker.notify import telegram
 
 
 @pytest.fixture
-def db(tmp_path, monkeypatch):
+def db(tmp_path, monkeypatch, make_db):
     monkeypatch.setattr(llm, "available", lambda *a, **k: None)
     monkeypatch.setattr(telegram, "send", lambda *a, **k: True)
     monkeypatch.setattr(docs, "find_domain", lambda *a: None)
     monkeypatch.setattr(docs, "company_brief", lambda *a: "Acme builds payment APIs")
-    d = DB(url="", sqlite_path=str(tmp_path / "t.db"))
+    d = make_db()
     j = Job(source="t", company="Acme", title="Backend Intern", location="India", url="https://x",
             jd_text="Python, FastAPI, PostgreSQL, Kafka, Docker. Build REST APIs.")
     d.insert_job(j, None)

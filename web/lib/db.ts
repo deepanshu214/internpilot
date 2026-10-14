@@ -53,8 +53,10 @@ export const newId = () => crypto.randomUUID().replaceAll("-", "");
 
 export async function enqueue(kind: string, jobId: string | null, payload: object = {}) {
   const id = newId();
+  // Microsecond-format timestamp (like the worker's) so same-second tasks keep their order.
+  const at = new Date().toISOString().slice(0, 23) + "000+00:00";
   await run("insert into tasks (id, kind, job_id, payload, status, created_at) values (?, ?, ?, ?, 'queued', ?)", [
-    id, kind, jobId, JSON.stringify(payload), now(),
+    id, kind, jobId, JSON.stringify(payload), at,
   ]);
   return id;
 }

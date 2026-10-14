@@ -25,8 +25,8 @@ def quiet(monkeypatch):
 
 
 @pytest.fixture
-def db(tmp_path):
-    d = DB(url="", sqlite_path=str(tmp_path / "t.db"))
+def db(tmp_path, make_db):
+    d = make_db()
     for company, title, status in [("Razorpay", "Backend Intern", "tailored"), ("Acme", "Security Intern", "applied"),
                                    ("Razorpay", "Data Intern", "new")]:
         j = Job(source="t", company=company, title=title, location="India", url=f"https://x/{title}")

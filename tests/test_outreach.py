@@ -26,8 +26,8 @@ def offline(monkeypatch, tmp_path):
 
 
 @pytest.fixture
-def db(tmp_path):
-    d = DB(url="", sqlite_path=str(tmp_path / "t.db"))
+def db(tmp_path, make_db):
+    d = make_db()
     job = Job(source="greenhouse", company="Acme Pvt. Ltd.", title="Security Engineering Intern (Summer 2027)",
               location="Bengaluru, India", url="https://boards.greenhouse.io/acme/jobs/1",
               jd_text="Work on intrusion detection and network security in Python. Linux, Wireshark, firewalls.")
@@ -156,3 +156,13 @@ def test_telegram_buttons(db, monkeypatch):
     assert db.one("select count(*) n from tasks where status = 'queued'")["n"] == 3
     assert "Job not found" == telegram_bot.handle_callback(db, "sl:doesnotexist")
     assert "shortlisted" in telegram_bot.handle_command(db, "/status")
+
+
+def test_tasks_run_in_queue_order_within_one_second(db, monkeypatch):
+    order = []
+    monkeypatch.setitem(tasks.HANDLERS, "prep", "worker.docs:run_task")
+    monkeypatch.setattr("worker.docs.run_task", lambda d, t: order.append(t["payload"]["n"]) or {})
+    for n in range(12):
+        db.enqueue("prep", db.job_id, {"n": n})
+    tasks.run_pending(db)
+    assert order == list(range(12))

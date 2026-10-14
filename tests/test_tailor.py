@@ -18,8 +18,8 @@ K8S_JD = ("Security Engineering Intern. Requirements: Kubernetes, Terraform, Go,
 
 
 @pytest.fixture
-def db(tmp_path):
-    d = DB(url="", sqlite_path=str(tmp_path / "t.db"))
+def db(tmp_path, make_db):
+    d = make_db()
     job = Job(source="test", company="Acme", title="Security Engineering Intern", location="Remote", url="https://x",
               jd_text=K8S_JD)
     d.insert_job(job, None)

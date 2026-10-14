@@ -56,8 +56,8 @@ def test_clean_html():
     assert clean_html("&lt;p&gt;Hello &amp;amp; world&lt;/p&gt;") == "Hello & world"
 
 
-def test_db_roundtrip(tmp_path):
-    db = DB(url="", sqlite_path=str(tmp_path / "t.db"))
+def test_db_roundtrip(tmp_path, make_db):
+    db = make_db()
     j = job()
     db.insert_job(j, None)
     db.insert_job(j, None)  # idempotent
@@ -67,3 +67,21 @@ def test_db_roundtrip(tmp_path):
     assert len(rows) == 1 and rows[0]["score"] == 90
     db.mark_notified([j.id])
     assert db.pending_alerts(70, 10) == []
+
+
+def test_alerts_without_telegram_stay_pending(make_db, monkeypatch):
+    from worker import pipeline
+    from worker.notify import telegram
+    db = make_db()
+    j = job(jd="Python FastAPI PostgreSQL Docker backend intern")
+    monkeypatch.setattr(pipeline, "fetch_all", lambda s: ([j], {}))
+    monkeypatch.setattr(pipeline, "score_jobs", lambda jobs, s: [
+        {"job": x, "score": 90, "reasons": ["r"], "missing": [], "method": "heuristic", "embedding": None} for x in jobs])
+    monkeypatch.setattr(telegram, "enabled", lambda: False)
+    monkeypatch.setattr(telegram, "send", lambda *a, **k: True)
+    pipeline.run_once(db)
+    assert len(db.pending_alerts(70, 10)) == 1          # printed, not delivered → still pending
+    monkeypatch.setattr(telegram, "enabled", lambda: True)
+    monkeypatch.setattr(pipeline, "fetch_all", lambda s: ([], {}))
+    pipeline.run_once(db)
+    assert db.pending_alerts(70, 10) == []              # delivered once Telegram is connected
