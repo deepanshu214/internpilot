@@ -9,7 +9,7 @@ import logging
 import time
 from datetime import datetime, timezone
 
-from . import gmail, tasks
+from . import gmail, llm, tasks
 from .db import DB, now
 from .notify import digest, telegram_bot
 from .outreach import followup
@@ -55,7 +55,8 @@ def main():
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     logging.getLogger("JobSpy").setLevel(logging.WARNING)
     db = DB()
-    log.info("worker started (gmail: %s)", gmail.available())
+    llm.use_db(db)  # persist free-tier usage so caps hold across restarts and show in the dashboard
+    log.info("worker started (gmail: %s, llm: %s)", gmail.available(), llm.chain("write") or "none")
     while True:
         safely("tick", tick, db, args.discover_hours)
         time.sleep(args.interval)

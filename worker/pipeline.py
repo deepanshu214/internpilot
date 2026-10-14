@@ -21,7 +21,7 @@ def run_once(db: DB | None = None, settings=SETTINGS) -> dict:
     seen = db.existing_ids(list(unique))
     new_jobs = [j for jid, j in unique.items() if jid not in seen]
     log.info("fetched %d, kept %d, unique %d, new %d (llm: %s)",
-             len(fetched), len(kept), len(unique), len(new_jobs), llm.available() or "none")
+             len(fetched), len(kept), len(unique), len(new_jobs), llm.available("score") or "none")
 
     for r in score_jobs(new_jobs, settings):
         db.insert_job(r["job"], r["embedding"])

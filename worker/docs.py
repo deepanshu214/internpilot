@@ -42,7 +42,7 @@ def prep_pack(db: DB, job_id: str) -> str:
     project = pick_project(job)
     have, missing = skill_gap(f"{job['title']} {job.get('jd_text') or ''}")
     body = None
-    if llm.available():
+    if llm.available("write"):
         body = llm.chat_text(
             "You are an interview coach for a CS intern candidate. Write a concise markdown prep pack with sections: "
             "## The company (2-3 lines), ## What the role needs (bullets), ## Likely technical questions (8, specific to "
@@ -73,7 +73,7 @@ def cover_letter(db: DB, job_id: str) -> str:
     project = pick_project(job)
     f = facts(job, project, brief)
     text = None
-    if llm.available():
+    if llm.available("write"):
         text = llm.chat_text(
             "Write a 200-250 word cover letter for an internship. Use ONLY the facts given; never invent metrics, "
             "tools or experience. Specific, confident, no clichés. Plain text, no placeholders.",

@@ -18,7 +18,7 @@ def msg(subject, text, sender="no-reply@greenhouse.io", thread="t1", mid="m1"):
 
 @pytest.fixture(autouse=True)
 def quiet(monkeypatch):
-    monkeypatch.setattr(llm, "available", lambda: None)
+    monkeypatch.setattr(llm, "available", lambda *a, **k: None)
     sent = []
     monkeypatch.setattr(telegram, "send", lambda text, buttons=None: sent.append(text) or True)
     return sent

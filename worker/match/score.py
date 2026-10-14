@@ -89,7 +89,7 @@ def llm_score(job, missing_hint: list[str]) -> dict | None:
     }
     user = (f"CANDIDATE:\n{json.dumps(candidate)}\n\nJOB: {job.title} at {job.company} ({job.location})\n"
             f"{job.jd_text[:5000]}\n\nKeyword scan suggests missing: {', '.join(missing_hint) or 'none'}")
-    out = llm.chat_json(RUBRIC.format(grad_year=p["grad_year"], location=p["location"]), user)
+    out = llm.chat_json(RUBRIC.format(grad_year=p["grad_year"], location=p["location"]), user, purpose="score")
     if not out or not isinstance(out.get("score"), (int, float)):
         return None
     out["score"] = max(0, min(100, int(out["score"])))
@@ -114,11 +114,11 @@ def score_jobs(jobs, settings=SETTINGS) -> list[dict]:
     cfg = settings["match"]
     keep_n = max(1, math.ceil(len(jobs) * cfg["prefilter_keep"]))
     shortlist = sorted(results, key=lambda r: (r["sim"], r["score"]), reverse=True)[:keep_n]
-    if llm.available():
+    if llm.available("score"):
         for r in sorted(shortlist, key=lambda r: r["score"], reverse=True)[: cfg["llm_max_per_run"]]:
             out = llm_score(r["job"], r["missing"])
             if out:
-                r.update(score=out["score"], method=llm.available(),
+                r.update(score=out["score"], method=llm.last_provider or "llm",
                          reasons=out.get("reasons") or r["reasons"],
                          missing=out.get("missing_skills") or r["missing"])
                 if out.get("eligibility_issue"):

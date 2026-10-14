@@ -4,6 +4,8 @@ import argparse
 import logging
 import time
 
+from . import llm
+from .db import DB
 from .pipeline import run_once
 
 
@@ -15,8 +17,10 @@ def main():
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     logging.getLogger("JobSpy").setLevel(logging.WARNING)
 
+    db = DB()
+    llm.use_db(db)
     while True:
-        print(run_once())
+        print(run_once(db))
         if args.once:
             return
         time.sleep(args.every_hours * 3600)

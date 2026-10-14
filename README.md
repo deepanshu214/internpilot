@@ -10,7 +10,7 @@ Setup steps that need your accounts: **[SETUP_TONIGHT.md](SETUP_TONIGHT.md)**.
 ```
  Mac worker (launchd, python -m worker.agent)                 Cloud
  ├─ discovery every 3 h ── 15+ sources ──┐                    ┌──────────────────────────┐
- ├─ matching (Ollama / Groq / heuristic) ├──► Postgres ◄──────┤ Next.js dashboard (Vercel)│
+ ├─ matching (Groq / Gemini / heuristic)  ├──► Postgres ◄──────┤ Next.js dashboard (Vercel)│
  ├─ task queue: tailor · contacts · drafts│   (Supabase)       │ inbox · pipeline · job    │
  │   send · autofill · prep · cover letter│   or local SQLite  │ page · outreach · insights│
  ├─ Gmail: replies, OA/interview/rejection┘                    └──────────────────────────┘
@@ -28,6 +28,8 @@ Setup steps that need your accounts: **[SETUP_TONIGHT.md](SETUP_TONIGHT.md)**.
 | LinkedIn alerts, Wellfound, Instahyre, Cutshort, Naukri alerts… | your job-alert emails (read-only Gmail) | Gmail |
 
 ## Safety rails
+- **$0 to run**: AI uses free tiers only (Groq small model for scoring, Groq 70B for writing, Gemini as backup), with
+  daily caps below the free limits, automatic fallback, paid-plan detection, and a usage & cost card in the dashboard.
 - **Resume tailor** only selects, reorders and rephrases `profile/profile.yaml`. A validator rejects any rewrite that adds a
   skill or number not in the source item (`worker/tailor/validate.py`), and the result is forced onto one page.
 - **Emails**: drafts only; sending requires *Approve* on that draft; daily cap (15); `DRY_RUN=1` by default writes

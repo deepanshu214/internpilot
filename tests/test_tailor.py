@@ -61,7 +61,7 @@ def test_llm_rewrites_are_filtered(monkeypatch):
                     b1: "Streamed live telemetry and alerts over WebSockets using a statistical baseline (μ + 2σ) to tell "
                         "benign bursts from volumetric attacks."},  # faithful → accepted
     }
-    monkeypatch.setattr(llm, "available", lambda: "ollama")
+    monkeypatch.setattr(llm, "available", lambda *a, **k: "groq_large")
     monkeypatch.setattr(llm, "chat_json", lambda *a, **k: fake)
     sel = select_mod.select(K8S_JD, title="Security Engineering Intern")
     assert [p["name"] for p in sel["projects"]] == [NETGUARD["name"]]  # unknown project ignored
@@ -74,7 +74,7 @@ def test_llm_rewrites_are_filtered(monkeypatch):
 
 
 def test_tailor_end_to_end_one_page(db, monkeypatch, tmp_path):
-    monkeypatch.setattr(llm, "available", lambda: None)
+    monkeypatch.setattr(llm, "available", lambda *a, **k: None)
     monkeypatch.setattr("worker.tailor.service.OUTPUT_DIR", tmp_path)
     out = tailor(db, db.job_id)
     row = db.one("select * from resumes where id = ?", (out["resume_id"],))

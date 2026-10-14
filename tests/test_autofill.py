@@ -36,7 +36,7 @@ def resume(tmp_path):
 
 @pytest.fixture(autouse=True)
 def no_llm(monkeypatch):
-    monkeypatch.setattr(llm, "available", lambda: None)
+    monkeypatch.setattr(llm, "available", lambda *a, **k: None)
 
 
 def test_answer_rules():

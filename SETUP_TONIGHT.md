@@ -3,6 +3,8 @@
 Everything else is built and tested (45 tests). Work top to bottom; each step ends with a ✅ check.
 Total: about 60–75 minutes. Steps 1–4 already give you a working system; 5–8 add the cloud dashboard and email.
 
+> **Never get charged:** see the bottom of this file. Short version: never add a payment method anywhere.
+
 All commands run from the project folder:
 ```bash
 cd ~/Desktop/internpilot && cp -n .env.example .env
@@ -22,13 +24,16 @@ Everything is generated from `profile/profile.yaml`, and the resume tailor may n
 2. Send any message to your new bot, then run `.venv/bin/python scripts/telegram_chat_id.py` → put the number in `TELEGRAM_CHAT_ID=`.
 - ✅ `.venv/bin/python -m worker.scheduler --once` → alerts arrive with **✅ Shortlist & prepare / ⏭ Skip** buttons.
 
-## 3. Local LLM (15 min, ~5 GB download)
-```bash
-brew install ollama && brew services start ollama
-ollama pull qwen2.5:7b && ollama pull nomic-embed-text
-```
-- ✅ The run log says `llm: ollama`, and scores show "scored by ollama" in the dashboard.
-- Optional: a free key from console.groq.com → `GROQ_API_KEY=`. It's used when Ollama is off.
+## 3. Free AI keys: Groq + Gemini (5 min, no card needed)
+1. **Groq** → https://console.groq.com → sign in → **API Keys → Create** → `.env`: `GROQ_API_KEY=`
+   - Stay on the **Free** plan. Never click *Upgrade* and never add a card.
+2. **Gemini** → https://aistudio.google.com → **Get API key → Create API key** → `.env`: `GEMINI_API_KEY=`
+   - Use a project with **no billing account**. Ignore any "set up billing" or "buy credits" prompts.
+- ✅ The run log says `llm: groq_small`, and the dashboard → **Activity → AI usage & cost** shows calls and **Cost: $0.00**.
+- How the bot stays free: Groq's small model scores jobs, Groq's 70B writes emails and resumes, and Gemini is the backup.
+  Daily caps in `config/settings.yaml` sit below each free limit. When one is hit, the bot switches to the next free option,
+  then to keyword scoring and templates. If Groq ever reports paid-plan limits, you get a Telegram warning.
+- Ollama is optional now (skip it on your 8 GB Mac).
 
 ## 4. Start the always-on worker (2 min)
 ```bash
@@ -78,3 +83,23 @@ Create job alerts, delivered to this Gmail, on: **LinkedIn** (Jobs → search "i
 - First real autofill: in the dashboard open a Greenhouse or Lever job → **Open & autofill on Mac**. A browser opens,
   fills the form, outlines what needs you in orange, and outlines Submit in red. **You** check everything and submit.
 - Tune `config/settings.yaml`: locations, search terms, `alert_threshold`, `daily_cap`. Use `mode: job` later for full-time roles.
+
+---
+
+## Never get charged: every service used, and how it stays $0
+| Service | What it's for | Free as long as… | If you hit a limit |
+|---|---|---|---|
+| Groq | job scoring, emails, resume wording | you stay on the Free plan (no card) | 429 → bot uses Gemini / templates |
+| Gemini | backup writer | the API key's project has **no billing account** | 429 → templates |
+| Supabase | database | Free plan, no card (500 MB; we use a few MB a month) | it restricts the project; it doesn't bill |
+| Vercel | dashboard hosting | Hobby plan, no card | it pauses; it doesn't bill |
+| GitHub | private repo | free plan | n/a |
+| Telegram, Gmail API | alerts, email | always free | n/a |
+| Hunter.io (optional) | recruiter emails | Free plan (25 searches/month), no card | searches stop until next month |
+| Job sources | discovery | public pages/APIs, no accounts | a source is skipped that run |
+
+The bot also guards the AI side itself:
+- daily caps below every free limit (`config/settings.yaml → llm`);
+- a Telegram note at 80% of a cap;
+- a warning if Groq reports paid-plan limits;
+- a live **AI usage & cost** card on the dashboard's Activity page.

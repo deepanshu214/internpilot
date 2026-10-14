@@ -36,9 +36,9 @@ def classify(msg: dict) -> str:
     for kind, pattern in RULES:
         if re.search(pattern, text, re.I):
             return kind
-    if llm.available() and ATS_SENDERS.search(msg["from"]):
+    if llm.available("score") and ATS_SENDERS.search(msg["from"]):
         out = llm.chat_json('Classify this email about a job application. Return {"kind": one of "applied", "oa", '
-                            '"interview", "rejection", "offer", "other"}', text[:3000])
+                            '"interview", "rejection", "offer", "other"}', text[:3000], purpose="score")
         if out and out.get("kind") in {"applied", "oa", "interview", "rejection", "offer"}:
             return out["kind"]
     return "other"

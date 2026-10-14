@@ -108,7 +108,7 @@ def llm_selection(jd: str, base: dict, title: str = "") -> dict:
     if not out:
         return base
     sel = copy.deepcopy(base)
-    sel["method"] = llm.available() or "heuristic"
+    sel["method"] = llm.last_provider or "llm"
 
     names = {p["name"] for p in PROFILE["projects"]}
     picked = [n for n in out.get("projects", []) if n in names][:MAX_PROJECTS]
@@ -149,4 +149,4 @@ def llm_selection(jd: str, base: dict, title: str = "") -> dict:
 
 def select(jd: str, title: str = "") -> dict:
     base = heuristic_selection(jd, title=title)
-    return llm_selection(jd, base, title) if llm.available() else base
+    return llm_selection(jd, base, title) if llm.available("write") else base

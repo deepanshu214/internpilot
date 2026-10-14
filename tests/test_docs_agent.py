@@ -8,7 +8,7 @@ from worker.notify import telegram
 
 @pytest.fixture
 def db(tmp_path, monkeypatch):
-    monkeypatch.setattr(llm, "available", lambda: None)
+    monkeypatch.setattr(llm, "available", lambda *a, **k: None)
     monkeypatch.setattr(telegram, "send", lambda *a, **k: True)
     monkeypatch.setattr(docs, "find_domain", lambda *a: None)
     monkeypatch.setattr(docs, "company_brief", lambda *a: "Acme builds payment APIs")

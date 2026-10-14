@@ -13,7 +13,7 @@ from worker.outreach.contacts import guess_emails, linkedin_search_url
 
 @pytest.fixture(autouse=True)
 def offline(monkeypatch, tmp_path):
-    monkeypatch.setattr(llm, "available", lambda: None)
+    monkeypatch.setattr(llm, "available", lambda *a, **k: None)
     monkeypatch.setattr(company, "find_domain", lambda db, c, u="": "acme.dev")
     monkeypatch.setattr(draft, "find_domain", lambda db, c, u="": "acme.dev")
     monkeypatch.setattr(draft, "company_brief", lambda db, c, d: "Acme builds network observability tools for SREs")
@@ -67,7 +67,7 @@ def test_template_draft_is_specific_and_honest(db):
 
 
 def test_llm_email_with_invented_skill_falls_back_to_template(db, monkeypatch):
-    monkeypatch.setattr(llm, "available", lambda: "ollama")
+    monkeypatch.setattr(llm, "available", lambda *a, **k: "groq_large")
     monkeypatch.setattr(llm, "chat_json", lambda *a, **k: {
         "subject": "Kubernetes expert here", "body": "Hi Priya, I have 3 years of Kubernetes and Rust experience at Acme. " * 6})
     out = draft.draft_outreach(db, db.job_id)

@@ -58,6 +58,8 @@ def weekly_text(db: DB) -> str:
     sources = db.query("select j.source, count(*) n from jobs j join matches m on m.job_id = j.id"
                        " where m.status in ('applied','oa','interview','offer') group by j.source order by n desc limit 5")
     gaps = skill_gaps(db)
+    ai_calls = sum(e.get("requests", 0) for i in range(7)
+                   for e in (db.kv_get(f"llm_usage:{(datetime.now(timezone.utc) - timedelta(days=i)).date().isoformat()}", {}) or {}).values())
     lines = ["<b>📊 Weekly review</b>",
              f"Applied: {by_status.get('applied', 0)} · OA: {by_status.get('oa', 0)} · interviews: "
              f"{by_status.get('interview', 0)} · offers: {by_status.get('offer', 0)} · rejected: {by_status.get('rejected', 0)}",
@@ -65,6 +67,7 @@ def weekly_text(db: DB) -> str:
              + (f" (replies by template: {dict(by_variant)})" if by_variant else "")]
     if sources:
         lines.append("Sources that led to applications: " + ", ".join(f"{html.escape(s['source'])} ({s['n']})" for s in sources))
+    lines.append(f"AI calls: {ai_calls} on free tiers · cost $0")
     if gaps:
         lines.append("Skills to learn next (missing in your top matches): " + ", ".join(f"{s} ×{n}" for s, n in gaps[:6]))
     return "\n".join(lines)

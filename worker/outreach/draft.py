@@ -172,7 +172,7 @@ def draft_outreach(db: DB, job_id: str, contact_id: str | None = None) -> dict:
                               (job_id, contact["id"])):
             continue
         variant = next_variant(db)
-        made = llm_email(job, project, contact, brief, variant) if llm.available() else None
+        made = llm_email(job, project, contact, brief, variant) if llm.available("write") else None
         subject, body = made or template_email(job, project, contact, brief, variant)
         drafts.append(db.insert("outreach", {
             "contact_id": contact["id"] if contact else None, "job_id": job_id, "kind": "cold", "variant": variant,
@@ -193,7 +193,7 @@ def referral_message(db: DB, job_id: str, person: str = "") -> dict:
     project = pick_project(job)
     f = facts(job, project, "")
     msg = None
-    if llm.available():
+    if llm.available("write"):
         out = llm.chat_json(REFERRAL, json.dumps({**f, "person": person or "there", "job_url": job["url"]}))
         msg = out.get("message") if out else None
     if not msg:

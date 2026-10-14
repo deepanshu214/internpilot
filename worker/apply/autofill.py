@@ -79,7 +79,7 @@ def answer_for(label: str, rules: list[dict], values: dict | None = None) -> str
 
 def draft_free_text(question: str, job: dict) -> str | None:
     """LLM draft for an open question ('Why do you want to join X?'). Validated: no skills you don't have."""
-    if not llm.available():
+    if not llm.available("write"):
         return None
     text = llm.chat_text(
         "Answer this job-application question for a CS student in 60-120 words, first person, specific and honest. "
@@ -191,6 +191,7 @@ def run(job_id: str, headless: bool = False, wait: bool = True) -> dict:
     from ..tailor.service import resume_attachment
 
     db = DB()
+    llm.use_db(db)
     job = db.job_with_match(job_id)
     name, pdf = resume_attachment(db, job_id)
     resume_path = OUTPUT_DIR / "apply" / name

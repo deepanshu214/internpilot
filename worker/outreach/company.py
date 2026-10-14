@@ -126,7 +126,7 @@ def company_brief(db: DB, company: str, domain: str | None) -> str:
         html = _site_matches(domain, company) or ""
         text = extract_site_text(html) if html else ""
         if text:
-            brief = (llm.chat_text(BRIEF, f"Company: {company}\nWebsite text:\n{text}", temperature=0.2)
+            brief = (llm.chat_text(BRIEF, f"Company: {company}\nWebsite text:\n{text}", purpose="score", temperature=0.2)
                      or fallback_brief(html))
     _save(db, key, domain=domain, brief=brief)
     return brief

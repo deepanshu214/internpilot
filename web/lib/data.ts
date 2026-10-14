@@ -123,3 +123,21 @@ export async function recentEvents() {
   return query<{ id: string; ts: string; kind: string; job_id: string | null; detail: string; title: string | null }>(
     `select e.*, j.title from events e left join jobs j on j.id = e.job_id order by e.ts desc limit 80`);
 }
+
+export type Usage = { requests: number; tokens: number; limited: boolean };
+export type Cap = { max_requests_per_day?: number; max_tokens_per_day?: number; configured: boolean; model: string };
+
+export async function llmUsage() {
+  const day = new Date().toISOString().slice(0, 10);
+  const rows = await query<{ key: string; value: string }>("select key, value from kv where key like ? order by key desc limit 7",
+    ["llm_usage:%"]);
+  const caps = await one<{ value: string }>("select value from kv where key = 'llm_caps'");
+  const paid = await one<{ value: string }>("select value from kv where key = 'groq_paid_warned'");
+  const days = rows.map((r) => ({ day: r.key.slice(10), usage: JSON.parse(r.value) as Record<string, Usage> }));
+  return {
+    today: days.find((d) => d.day === day)?.usage ?? {},
+    week: days,
+    caps: (caps ? JSON.parse(caps.value) : {}) as Record<string, Cap>,
+    paidWarning: Boolean(paid),
+  };
+}
