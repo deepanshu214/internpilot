@@ -64,8 +64,8 @@ Create job alerts, delivered to this Gmail, on: **LinkedIn** (Jobs → search "i
 - ✅ The script prints row counts (about 500 jobs).
 
 ## 8. Deploy the dashboard to Vercel (10 min)
-1. Push this repo to a **private** GitHub repo (it contains your phone number).
-2. Vercel → Add New Project → import it → **Root Directory: `web`**.
+1. ~~Push to a private GitHub repo~~ Done: https://github.com/deepanshu214/internpilot (private; keep it that way, it has your phone number).
+2. Vercel → Add New Project → import `deepanshu214/internpilot` → **Root Directory: `web`**.
 3. Environment variables:
    - `DATABASE_URL` = the **Transaction pooler** URI from 7.2
    - `DASHBOARD_PASSWORD` = a strong password
