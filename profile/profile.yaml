@@ -63,7 +63,7 @@ projects:
       - Added SOAR-style active defense generating kernel firewall rules (iptables / pfctl / netsh) and per-incident PCAP export.
   - name: Quantum-Aware Secure IPC Middleware
     stack: [Python, ML-KEM-768, ML-DSA-65, X25519, Ed25519, AES-256-GCM]
-    url: ""
+    url: https://github.com/deepanshu214/secure-ipc-pqc
     tags: [security, cryptography, post-quantum, systems, os, ipc]
     pitch: Authenticated, encrypted IPC with classical, hybrid and post-quantum (NIST FIPS 203/204) modes, benchmarked under 7 attacks.
     bullets:
@@ -72,7 +72,7 @@ projects:
       - Evaluated 7 attacks across 3 modes and benchmarked handshake latency, throughput, CPU and memory.
   - name: MoodSpace — Secure AI-Powered Social Platform
     stack: [FastAPI, PostgreSQL, PostGIS, pgvector, Docker, Alembic]
-    url: ""
+    url: https://github.com/deepanshu214/moodspace
     tags: [backend, api, ai, security, databases, geospatial]
     pitch: A FastAPI/Postgres social backend with JWT auth, PostGIS geo queries and encrypted journal storage.
     bullets:
@@ -81,7 +81,7 @@ projects:
       - Engineered PostGIS ST_DWithin radius-based location APIs and an AES-256-GCM encryption pipeline for journals.
   - name: Margdarshak
     stack: [Python, JavaScript, HTML, CSS, Web Scraping]
-    url: ""
+    url: https://github.com/deepanshu214/MargDarshak-AI
     tags: [ai, recommendation, edtech, web, scraping]
     pitch: An AI career-path recommender with automated scholarship matching (VIT hackathon).
     bullets:
@@ -89,7 +89,7 @@ projects:
       - Built automated scholarship matching using web scraping to index active government schemes.
   - name: Library Management System
     stack: [C++, Data Structures, HTML, CSS]
-    url: ""
+    url: https://github.com/deepanshu214/Library-management-system
     tags: [dsa, cpp, systems]
     pitch: A C++ library system built on hash maps, doubly linked lists and BSTs.
     bullets:
