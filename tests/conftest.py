@@ -3,15 +3,32 @@ tests against Postgres (what Supabase uses). The schema is dropped before each t
 import os
 import re
 
-import pytest
+# Tests must never touch your real accounts: blank every secret BEFORE worker.config loads .env
+# (python-dotenv never overrides variables that are already set).
+for _var in ("TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID", "GROQ_API_KEY", "GEMINI_API_KEY", "HUNTER_API_KEY",
+             "DATABASE_URL", "DASHBOARD_URL"):
+    os.environ[_var] = ""
+os.environ["GMAIL_TOKEN"] = "/nonexistent/internpilot-test-gmail-token.json"
+os.environ["DRY_RUN"] = "1"
+os.environ["OLLAMA_URL"] = "http://127.0.0.1:9"  # nothing listens here
 
-from worker.db import DB
+import pytest  # noqa: E402
+
+from worker.db import DB  # noqa: E402
 
 TEST_PG = os.getenv("TEST_DATABASE_URL", "")
 
 
 def _local(url: str) -> bool:
     return bool(re.search(r"@(localhost|127\.0\.0\.1)[:/]|host=/", url))
+
+
+@pytest.fixture(autouse=True)
+def no_live_services(monkeypatch):
+    """Belt and braces: fail loudly if any test tries a real Telegram / Groq / Gemini / Gmail call."""
+    from worker import config, gmail
+    assert not config.TELEGRAM_BOT_TOKEN and not config.GROQ_API_KEY and not config.GEMINI_API_KEY
+    monkeypatch.setattr(gmail, "available", lambda: False)
 
 
 @pytest.fixture

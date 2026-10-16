@@ -72,7 +72,9 @@ RUBRIC = """You are a strict technical recruiter screening internship applicatio
 Score how well the CANDIDATE fits the JOB from 0-100 using this rubric:
 - 40 pts: required skills/technologies the candidate demonstrably has
 - 25 pts: relevance of the candidate's projects/experience to the team's work
-- 20 pts: eligibility (student year, graduation year {grad_year}, degree, location {location}, work authorization)
+- 20 pts: eligibility (student year, graduation year {grad_year}, degree, work authorization). The candidate lives in
+  {location} and is open to: {open_to}. So any Indian city or remote is a full location match; only a role that
+  requires being outside India (or foreign work authorization) is a location problem.
 - 15 pts: nice-to-have skills and domain fit
 Hard rules: if the job requires a PhD, a graduation year the candidate can't meet, or work authorization they lack
 (e.g. US citizenship / OPT for a US-only role), cap the score at 30.
@@ -83,13 +85,14 @@ Return ONLY JSON: {{"score": int, "reasons": [3 short strings on why they fit],
 def llm_score(job, missing_hint: list[str]) -> dict | None:
     p = PROFILE
     candidate = {
-        "degree": p["degree"], "grad_year": p["grad_year"], "location": p["location"],
+        "degree": p["degree"], "grad_year": p["grad_year"], "location": p["location"], "open_to": p.get("open_to"),
         "skills": p["skills"], "experience": [{k: e[k] for k in ("role", "org", "bullets")} for e in p["experience"]],
         "projects": [{"name": x["name"], "stack": x["stack"], "pitch": x["pitch"]} for x in p["projects"]],
     }
     user = (f"CANDIDATE:\n{json.dumps(candidate)}\n\nJOB: {job.title} at {job.company} ({job.location})\n"
             f"{job.jd_text[:5000]}\n\nKeyword scan suggests missing: {', '.join(missing_hint) or 'none'}")
-    out = llm.chat_json(RUBRIC.format(grad_year=p["grad_year"], location=p["location"]), user, purpose="score")
+    out = llm.chat_json(RUBRIC.format(grad_year=p["grad_year"], location=p["location"],
+                                      open_to=p.get("open_to", "remote or on-site in India")), user, purpose="score")
     if not out or not isinstance(out.get("score"), (int, float)):
         return None
     out["score"] = max(0, min(100, int(out["score"])))

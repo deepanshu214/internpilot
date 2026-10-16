@@ -29,6 +29,8 @@ def env(monkeypatch, tmp_path, make_db):
     monkeypatch.setattr(llm, "GEMINI_API_KEY", "gem_test")
     monkeypatch.setattr(llm, "ollama_available", lambda: False)
     monkeypatch.setattr(llm, "_gemini_model", None)
+    monkeypatch.setattr(llm, "_recent", {})                    # fresh per-minute pacing window per test
+    monkeypatch.setattr(llm.time, "sleep", lambda s: None)     # never really wait in tests
     sent = []
     monkeypatch.setattr(telegram, "send", lambda text, buttons=None: sent.append(text) or True)
     db = make_db()
@@ -64,13 +66,13 @@ def test_purposes_use_the_right_models(env):
     assert llm.chat_json("s", "u", purpose="score") == {"score": 77}
     assert llm.last_provider == "groq_small"
     llm.chat_text("s", "u", purpose="write")
-    assert [m for _, m in env.calls] == ["llama-3.1-8b-instant", "llama-3.3-70b-versatile"]
+    assert [m for _, m in env.calls] == ["qwen/qwen3.8-27b", "openai/gpt-oss-120b"]
     usage = env.db.kv_get(llm.Ledger.key())
     assert usage["groq_small"] == {"requests": 1, "tokens": 1234, "limited": False}
 
 
 def test_429_marks_provider_and_falls_back_to_gemini(env):
-    env.responses += [Resp(429, {"error": "rate limit"}), ok("hello from gemini")]
+    env.responses += [Resp(429, {"error": "daily limit"}, {"retry-after": "3600"}), ok("hello from gemini")]
     assert llm.chat_text("s", "u", purpose="write") == "hello from gemini"
     assert llm.last_provider == "gemini"
     assert env.calls[1] == ("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
@@ -84,10 +86,11 @@ def test_429_marks_provider_and_falls_back_to_gemini(env):
 
 def test_caps_stop_calls_before_free_limit(env, monkeypatch):
     monkeypatch.setitem(llm.CFG["providers"]["groq_small"], "max_requests_per_day", 2)
+    monkeypatch.setitem(llm.CFG["providers"]["groq_alt"], "max_requests_per_day", 0)
     env.responses += [ok(), ok()]
     llm.chat_json("s", "u", purpose="score")
     llm.chat_json("s", "u", purpose="score")
-    assert llm.available("score") is None                       # score chain has no other free provider
+    assert llm.available("score") is None                       # both free score models capped
     assert llm.chat_json("s", "u", purpose="score") is None      # → caller uses keyword scoring
     assert len(env.calls) == 2
 
@@ -118,6 +121,35 @@ def test_paid_plan_detection(env):
 
 
 def test_free_plan_headers_are_quiet(env):
-    env.responses += [ok(headers={"x-ratelimit-limit-requests": "14400"})]
+    env.responses += [ok(headers={"x-ratelimit-limit-requests": "1000"})]
     llm.chat_json("s", "u", purpose="score")
     assert not any("paid plan" in t for t in env.sent)
+
+
+def test_short_rate_limit_waits_and_retries(env, monkeypatch):
+    slept = []
+    monkeypatch.setattr(llm.time, "sleep", lambda s: slept.append(s))
+    env.responses += [Resp(429, {"error": "tpm"}, {"retry-after": "7"}), ok('{"score": 81}')]
+    assert llm.chat_json("s", "u", purpose="score") == {"score": 81}
+    assert slept and slept[0] == 8                              # waited it out, same model
+    assert llm.LEDGER.entry("groq_small")["limited"] is False   # not written off for the day
+
+
+def test_tokens_per_minute_pacing(env, monkeypatch):
+    t = {"now": 1000.0}
+    slept = []
+    monkeypatch.setattr(llm.time, "monotonic", lambda: t["now"])
+    monkeypatch.setattr(llm.time, "sleep", lambda s: (slept.append(s), t.__setitem__("now", t["now"] + s)))
+    monkeypatch.setattr(llm, "_recent", {})
+    monkeypatch.setitem(llm.CFG["providers"]["groq_small"], "tokens_per_minute", 5000)
+    env.responses += [ok(tokens=4500), ok(tokens=4500)]
+    llm.chat_json("s", "u", purpose="score")
+    llm.chat_json("s", "u", purpose="score")                   # 4500 + ~700 estimate > 5000 → waits for the window
+    assert slept and 59 <= slept[0] <= 61
+
+
+def test_reasoning_effort_sent_for_gpt_oss(env, monkeypatch):
+    bodies = []
+    monkeypatch.setattr(llm.requests, "post", lambda url, **kw: bodies.append(kw["json"]) or ok("hi"))
+    llm.chat_text("s", "u", purpose="write")
+    assert bodies[0]["model"] == "openai/gpt-oss-120b" and bodies[0]["reasoning_effort"] == "low"

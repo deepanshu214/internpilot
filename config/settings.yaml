@@ -55,16 +55,18 @@ digest:
   hour: 21                 # daily digest at 21:00 local time
   weekly_day: sun          # weekly review report
 
-# AI providers: FREE TIERS ONLY. Daily caps sit well below each provider's free limits (checked Oct 2026), so even if
-# billing were switched on by mistake, usage stays inside the free volume. Over a cap → next provider → keyword/template
-# fallback. Live usage: dashboard → Activity.
+# AI providers: FREE TIERS ONLY. Limits below were read from this Groq account's response headers (Oct 2026):
+# each Groq model allows 1,000 requests/day and 8,000 tokens/minute on the free plan, separately per model.
+# Daily caps sit below the free limits, calls are paced under the per-minute limit, and over a cap the bot moves to the
+# next provider, then to keyword scoring / templates. Live usage: dashboard → Activity.
 llm:
-  score_chain: [groq_small, ollama]                       # high-volume: job scoring, email classification, summaries
-  write_chain: [groq_large, gemini, ollama, groq_small]   # quality: emails, resume rewording, prep packs
+  score_chain: [groq_small, groq_alt, ollama]                       # job scoring, email classification, summaries
+  write_chain: [groq_large, gemini, groq_alt, ollama]               # emails, resume rewording, prep packs
   providers:
-    groq_small: {model: llama-3.1-8b-instant, max_requests_per_day: 5000, max_tokens_per_day: 300000}   # free: 14.4k req / ~500k tok
-    groq_large: {model: llama-3.3-70b-versatile, max_requests_per_day: 400, max_tokens_per_day: 80000}  # free: 1k req / 100k tok
-    gemini: {model: auto, max_requests_per_day: 15, max_tokens_per_day: 60000}   # auto = newest Flash-Lite; free tier ~20+/day
-    ollama: {}                                            # local, unlimited (only if installed)
-  max_output_tokens: {score: 500, write: 900}
-  warn_at: 0.8                                            # Telegram note at 80% of a cap
+    groq_small: {model: qwen/qwen3.8-27b, max_requests_per_day: 700, max_tokens_per_day: 150000, tokens_per_minute: 7000}
+    groq_large: {model: openai/gpt-oss-120b, reasoning_effort: low, max_requests_per_day: 300, max_tokens_per_day: 100000, tokens_per_minute: 7000}
+    groq_alt: {model: openai/gpt-oss-20b, reasoning_effort: low, max_requests_per_day: 500, max_tokens_per_day: 100000, tokens_per_minute: 7000}
+    gemini: {model: auto, max_requests_per_day: 15, max_tokens_per_day: 60000}   # auto = newest stable Flash-Lite
+    ollama: {}                                                      # local, unlimited (only if installed)
+  max_output_tokens: {score: 700, write: 1500}                      # gpt-oss counts hidden reasoning in these
+  warn_at: 0.8                                                      # Telegram note at 80% of a cap

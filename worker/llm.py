@@ -11,6 +11,8 @@ and fall back to keyword scoring / templates, so the bot keeps working at $0.
 import json
 import logging
 import re
+import time
+from collections import deque
 from datetime import datetime, timezone
 
 import requests
@@ -20,9 +22,11 @@ from .config import GEMINI_API_KEY, GROQ_API_KEY, OLLAMA_EMBED_MODEL, OLLAMA_MOD
 log = logging.getLogger(__name__)
 CFG = SETTINGS["llm"]
 GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta"
-# Groq's free-tier daily request limits. Much higher numbers in the response headers mean the account is on a
-# paid plan; we warn so you can check billing.
-GROQ_FREE_RPD = {"llama-3.1-8b-instant": 14_400, "llama-3.3-70b-versatile": 1_000}
+# Groq's free-tier daily request limit (read from this account's response headers, Oct 2026). A much higher number
+# in the headers means the account is on a paid plan; we warn so you can check billing.
+GROQ_FREE_RPD = {"qwen/qwen3.8-27b": 1_000, "openai/gpt-oss-120b": 1_000, "openai/gpt-oss-20b": 1_000}
+MAX_WAIT = 90           # seconds we'll wait out a per-minute rate limit before trying the next provider
+_recent: dict[str, deque] = {}  # provider → (timestamp, tokens) of the last minute, for tokens-per-minute pacing
 
 _ollama_up: bool | None = None
 _gemini_model: str | None = None
@@ -147,27 +151,57 @@ def gemini_model() -> str:
         r.raise_for_status()
         names = [m["name"].split("/", 1)[1] for m in r.json().get("models", [])
                  if "generateContent" in m.get("supportedGenerationMethods", [])]
-        lite = [n for n in names if "flash-lite" in n and not re.search(r"preview|exp|tts|image|live|audio", n)]
-        pool = lite or [n for n in names if "flash" in n and not re.search(r"preview|exp|tts|image|live|audio", n)]
+        skip = r"preview|exp|tts|image|live|audio|latest|omni"
+        lite = [n for n in names if "flash-lite" in n and not re.search(skip, n)]
+        pool = lite or [n for n in names if "flash" in n and not re.search(skip, n)]
         if not pool:
             raise RuntimeError("no free-tier Gemini Flash model found")
-        _gemini_model = sorted(pool, key=lambda n: [int(x) if x.isdigit() else x for x in re.split(r"[.-]", n)])[-1]
+
+        def version(n: str):
+            return [(0, int(x)) if x.isdigit() else (1, x) for x in re.split(r"[.-]", n)]
+
+        _gemini_model = max(pool, key=version)
         log.info("gemini model: %s", _gemini_model)
     return _gemini_model
 
 
 class RateLimited(Exception):
-    pass
+    def __init__(self, msg: str, retry_after: float | None = None):
+        super().__init__(msg)
+        self.retry_after = retry_after
+
+
+def _pace(provider: str, tokens: int):
+    """Stay under the provider's tokens-per-minute limit by waiting (at most a minute) before the call."""
+    tpm = CFG["providers"].get(provider, {}).get("tokens_per_minute")
+    if not tpm:
+        return
+    q = _recent.setdefault(provider, deque())
+    while True:
+        now = time.monotonic()
+        while q and now - q[0][0] > 60:
+            q.popleft()
+        if sum(t for _, t in q) + tokens <= tpm or not q:
+            return
+        time.sleep(min(60.5 - (now - q[0][0]), 61))
+
+
+def _note_tokens(provider: str, tokens: int):
+    _recent.setdefault(provider, deque()).append((time.monotonic(), tokens))
 
 
 def _openai_compat(url: str, key: str, model: str, messages, as_json: bool, temperature: float, max_tokens: int,
-                   timeout: int):
-    body = {"model": model, "temperature": temperature, "messages": messages, "max_tokens": max_tokens}
+                   timeout: int, extra: dict | None = None):
+    body = {"model": model, "temperature": temperature, "messages": messages, "max_tokens": max_tokens, **(extra or {})}
     if as_json:
         body["response_format"] = {"type": "json_object"}
     r = requests.post(url, timeout=timeout, headers={"Authorization": f"Bearer {key}"}, json=body)
     if r.status_code == 429:
-        raise RateLimited(r.text[:200])
+        try:
+            wait = float(r.headers.get("retry-after", ""))
+        except ValueError:
+            wait = None
+        raise RateLimited(r.text[:200], wait)
     r.raise_for_status()
     data = r.json()
     return data["choices"][0]["message"]["content"], int((data.get("usage") or {}).get("total_tokens") or 0), r.headers
@@ -176,9 +210,11 @@ def _openai_compat(url: str, key: str, model: str, messages, as_json: bool, temp
 def _call(provider: str, messages, as_json: bool, temperature: float, max_tokens: int, timeout: int):
     """Returns (text, tokens_used)."""
     if provider.startswith("groq"):
-        model = CFG["providers"][provider]["model"]
+        cfg = CFG["providers"][provider]
+        model = cfg["model"]
+        extra = {"reasoning_effort": cfg["reasoning_effort"]} if cfg.get("reasoning_effort") else None
         text, tokens, headers = _openai_compat("https://api.groq.com/openai/v1/chat/completions", GROQ_API_KEY, model,
-                                               messages, as_json, temperature, max_tokens, timeout)
+                                               messages, as_json, temperature, max_tokens, timeout, extra)
         _check_groq_plan(model, headers)
         return text, tokens
     if provider == "gemini":
@@ -219,15 +255,26 @@ def _chat(system: str, user: str, purpose: str, as_json: bool, temperature: floa
     for provider in chain(purpose):
         if not under_cap(provider, estimate):
             continue
-        try:
-            text, tokens = _call(provider, messages, as_json, temperature, max_tokens, timeout)
-        except RateLimited as e:
-            log.warning("%s rate-limited, skipping it for today: %s", provider, e)
-            LEDGER.record(provider, limited=True)
+        text = None
+        for attempt in range(2):
+            _pace(provider, estimate)
+            try:
+                text, tokens = _call(provider, messages, as_json, temperature, max_tokens, timeout)
+                break
+            except RateLimited as e:
+                if attempt == 0 and e.retry_after is not None and e.retry_after <= MAX_WAIT:
+                    log.info("%s per-minute limit, waiting %.0fs", provider, e.retry_after)
+                    time.sleep(e.retry_after + 1)
+                    continue
+                log.warning("%s rate-limited (daily limit or long wait), skipping it for today: %s", provider, e)
+                LEDGER.record(provider, limited=True)
+                break
+            except (requests.RequestException, ValueError, KeyError, RuntimeError) as e:
+                log.warning("LLM call failed (%s): %s", provider, e)
+                break
+        if text is None:
             continue
-        except (requests.RequestException, ValueError, KeyError, RuntimeError) as e:
-            log.warning("LLM call failed (%s): %s", provider, e)
-            continue
+        _note_tokens(provider, tokens or estimate)
         LEDGER.record(provider, tokens or estimate)
         last_provider = provider
         return text
