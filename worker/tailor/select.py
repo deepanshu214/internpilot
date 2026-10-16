@@ -19,7 +19,7 @@ def summary_wording(summary: str) -> str | None:
     return "undersells you (weaker verb)" if _WEAK.search(summary) else None
 
 log = logging.getLogger(__name__)
-MAX_PROJECTS = 3
+MAX_PROJECTS = 5  # like your resume: all projects, most relevant first; the least relevant go first if the page overflows
 
 
 def jd_keywords(jd: str) -> list[str]:

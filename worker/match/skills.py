@@ -19,6 +19,9 @@ ALIASES = {
     "Kubernetes": ["k8s"], "AWS": ["amazon web services"], "Network Security": ["network defense"],
     "Cryptography": ["crypto engineering", "encryption"], "Linux": ["unix"], "REST APIs": ["rest", "restful"],
     "Data Structures": ["dsa"], "NLP": ["natural language processing"],
+    "LLM APIs": ["llm", "llms", "large language model", "genai", "generative ai"], "AES-GCM": ["aes-256-gcm", "aes"],
+    "Intrusion Detection": ["ids", "intrusion detection system"], "Anomaly Detection": ["anomaly", "outlier detection"],
+    "scikit-learn": ["sklearn", "scikit learn"], "Next.js": ["nextjs"], "React": ["react.js", "reactjs"],
 }
 
 

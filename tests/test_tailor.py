@@ -39,7 +39,7 @@ def test_validator_rejects_invented_skills_and_numbers():
 
 def test_validator_allows_skills_from_same_item():
     original = NETGUARD["bullets"][1]
-    reworded = "Streamed real-time alerts over WebSockets with a μ + 2σ statistical baseline separating benign bursts from volumetric attacks."
+    reworded = "Added one-click firewall blocking (iptables, pfctl, netsh), per-incident PCAP export and a µ + 2σ traffic baseline"
     assert check_bullet(reworded, original, NETGUARD) is None
 
 
@@ -58,8 +58,7 @@ def test_llm_rewrites_are_filtered(monkeypatch):
         "projects": [NETGUARD["name"], "Made Up Project"],
         "summary": "Security-focused CS student who has run Kubernetes in production.",
         "bullets": {b0: b0 + " Deployed on Kubernetes.",  # invented skill → rejected
-                    b1: "Streamed live telemetry and alerts over WebSockets using a statistical baseline (μ + 2σ) to tell "
-                        "benign bursts from volumetric attacks."},  # faithful → accepted
+                    b1: "Added one-click firewall blocking (iptables, pfctl, netsh), per-incident PCAP export and a µ + 2σ traffic baseline"},  # faithful reorder → accepted
     }
     monkeypatch.setattr(llm, "available", lambda *a, **k: "groq_large")
     monkeypatch.setattr(llm, "chat_json", lambda *a, **k: fake)

@@ -1,112 +1,141 @@
-# Master profile — the ONLY source of truth for resume tailoring and matching.
+# Master profile — the ONLY source of truth for resume tailoring, matching and emails.
 # The tailor may select/reorder/rephrase from here, never add to it.
+# Synced with Deepanshu_Agarwal_Resume.pdf (Jake's format, October 2026).
 name: Deepanshu Agarwal
 email: deepanshuagarwal10b@gmail.com
 phone: "[phone removed]"
 links:
-  github: https://github.com/deepanshu214
   linkedin: https://www.linkedin.com/in/deepanshu-agarwal-683b63320
+  github: https://github.com/deepanshu214
+  portfolio: https://deepanshu-portfolio-pi.vercel.app
 location: Vellore, Tamil Nadu, India
 open_to: Any city in India (will relocate for an internship) or remote
 grad_year: 2028
-degree: B.Tech Computer Science Engineering (Information Security)
+degree: B.Tech in Computer Science and Engineering (Information Security)
 # Short forms used in emails
 short: {school: VIT Vellore, degree: B.Tech CSE (Information Security), gpa: "8.69"}
 
+# Not printed on the resume (your resume has no summary); used as background facts for emails and AI scoring.
 summary: >-
-  B.Tech Computer Science student with strong fundamentals in Data Structures, Algorithms and core CS,
-  with hands-on experience building backend systems, REST APIs, network security tooling and AI-powered
-  applications using Python, FastAPI, PostgreSQL and Docker.
+  B.Tech Computer Science and Engineering (Information Security) student at VIT Vellore who builds security,
+  backend and AI systems in Python: an EV-charger security proxy, a real-time intrusion detection system,
+  post-quantum secure IPC, and a FastAPI backend with PostgreSQL built during an AI engineering internship.
 
+# Printed in this order as "Technical Skills". Groups listed under skills_hidden are used only for matching.
 skills:
-  core_cs: [Data Structures, Algorithms, OOP, Hash Maps, Binary Search Trees, Linked Lists, Operating Systems, Computer Networks, DBMS]
-  languages: [Python, C++, JavaScript, TypeScript, SQL]
-  web: [FastAPI, Flask, REST APIs, WebSockets, HTML, CSS]
-  databases: [PostgreSQL, PostGIS, pgvector, SQLite]
-  ml: [Machine Learning, Random Forest, NLP, Sentiment Analysis, Data Analysis, GenAI, LLM]
-  security: [Network Security, Intrusion Detection, Cryptography, JWT, bcrypt, AES-256-GCM, Post-Quantum Cryptography, Scapy, Wireshark, Firewalls]
-  tools: [Git, GitHub, Docker, Linux, Postman, Alembic, Agile, AWS]
+  languages: [Python, C++, TypeScript, JavaScript, SQL, Java]
+  security: [Cryptography, AES-GCM, X25519, Ed25519, ML-KEM, Intrusion Detection, Wireshark, Scapy, JWT, bcrypt]
+  web: [FastAPI, Flask, REST APIs, WebSockets, asyncio, Next.js, React, PostgreSQL, PostGIS, Supabase]
+  ml: [scikit-learn, Isolation Forest, Random Forest, NLP, Sentiment Analysis, LLM APIs]
+  tools: [Git, Docker, Linux, pytest, Postman, Vercel, Cisco Packet Tracer]
+  core_cs: [Data Structures, Algorithms, Operating Systems, Computer Networks, DBMS, Compiler Design]
+  keywords: [Network Security, Post-Quantum Cryptography, Machine Learning, Anomaly Detection, SQLAlchemy, Alembic,
+             pgvector, TLS, HMAC, Groq, Gemini, AWS, K-Means, Simulation]
+skills_hidden: [core_cs, keywords]
 
 education:
-  - school: Vellore Institute of Technology, Vellore
-    detail: B.Tech CSE (Specialization in Information Security) | GPA 8.69
-    dates: 2024 – 2028
-  - school: Montfort Inter College, Lucknow
-    detail: Class XII 92.8% | Class X 95.8%
+  - school: Vellore Institute of Technology
+    location: Vellore, Tamil Nadu
+    detail: "B.Tech in Computer Science and Engineering (Information Security) – CGPA: 8.69/10"
+    dates: Aug 2024 – May 2028
+    coursework: Data Structures & Algorithms, Operating Systems, Computer Networks, DBMS, Compiler Design
+  - school: Montfort Inter College
+    location: Lucknow, Uttar Pradesh
+    detail: "Class XII (PCM): 92.8%    Class X: 95.8%"
     dates: May 2024
 
 experience:
   - org: ADIEKS Technologies
     role: AI Engineer Intern
+    location: Remote
     dates: Jun 2026 – Aug 2026
-    tags: [ai, ml, nlp, backend, security]
+    tags: [backend, api, security, databases, geospatial, ai, nlp]
     bullets:
-      - Engineered automated data pipelines for text emotion classification and real-time sentiment extraction.
-      - Architected content-moderation modules and privacy-preserving data processing pipelines within a secure backend.
-      - Integrated production-grade application features using agile, collaborative engineering workflows.
-  - org: HexSoftwares
-    role: Web Developer Intern
-    dates: Apr 2026 – May 2026
-    tags: [web, frontend, backend, ai]
-    bullets:
-      - Engineered responsive web interfaces with cross-browser compatibility and fidelity to technical wireframes.
-      - Integrated conversational chatbots and recommendation services using Python and REST APIs.
+      - Built the backend of MoodSpace, a mood-tracking social app, with FastAPI, SQLAlchemy and Alembic, including a custom PostgreSQL Docker image with PostGIS and pgvector compiled from source
+      - Secured the API with JWT access/refresh tokens and bcrypt (cost 12), and encrypted private journal notes with AES-256-GCM before they reach the database
+      - Built a nearby-mood search using PostGIS ST_DWithin and a real-time crisis-keyword detector that skips idioms such as “dead tired” and returns helpline details
 
 projects:
-  - name: NetGuard SOC — Real-Time Network Intrusion Detection System
-    stack: [Python, Scapy, Flask-SocketIO, WebSockets, Chart.js]
-    url: https://github.com/deepanshu214/NetGuard
-    tags: [security, networking, ids, soc, realtime, systems, backend]
-    pitch: A live NIDS that captures packets, runs 6 stateful detectors and pushes firewall blocks automatically.
+  - name: VoltSentry
+    stack: [Python, asyncio, WebSockets, scikit-learn, Next.js, TypeScript]
+    url: https://github.com/deepanshu214/Voltsentry
+    dates: Sep 2026
+    tags: [security, networking, protocol, iot, ev, ml, anomaly-detection, backend, realtime]
+    pitch: An inline OCPP 1.6-J security proxy for EV chargers that pairs rule checks with an Isolation Forest model and quarantines rogue stations.
     bullets:
-      - Built a packet-capture NIDS (Scapy/libpcap) decoding L2–L4 headers and evaluating streams with 6 stateful heuristic detectors (port scan, SYN flood, UDP/ICMP floods, DNS tunneling).
-      - Streamed live telemetry and alerts over WebSockets with a statistical baseline (μ + 2σ) to separate benign bursts from volumetric attacks.
-      - Added SOAR-style active defense generating kernel firewall rules (iptables / pfctl / netsh) and per-incident PCAP export.
-  - name: Quantum-Aware Secure IPC Middleware
-    stack: [Python, ML-KEM-768, ML-DSA-65, X25519, Ed25519, AES-256-GCM]
+      - Built an inline OCPP 1.6-J security proxy that screens EV-charger traffic and quarantines rogue stations
+      - Paired rule checks (meter spoofing, session hijack, card cloning) with an Isolation Forest model that caught a slow meter-drift attack in 9.7 s, before any rule fired, with zero false alarms across 8 honest chargers
+      - Federated sites with HMAC-SHA256-signed messages, replay protection and TLS 1.3; 184 pytest tests
+  - name: InternPilot
+    stack: [Python, LLMs (Groq, Gemini), Next.js, PostgreSQL, Supabase]
+    url: https://github.com/deepanshu214/internpilot
+    dates: Oct 2026
+    tags: [ai, llm, automation, backend, web, data, fullstack]
+    outreach: false   # don't pitch the job-application bot itself in cold emails
+    pitch: An AI agent that pulls internships from 15+ sources, ranks them with LLMs and drafts tailored resumes, with a guardrail against invented facts.
+    bullets:
+      - Built an AI agent that pulls internships from 15+ sources, ranks them with LLMs and drafts tailored resumes, with a guardrail that rejects any rewrite adding facts not in the source profile
+      - Kept running cost at $0 with daily caps under free-tier limits and LLM provider fallback; 50+ pytest tests
+  - name: Quantum-Aware Secure IPC
+    stack: [Python, ML-KEM, ML-DSA, X25519, AES-256-GCM]
     url: https://github.com/deepanshu214/secure-ipc-pqc
+    dates: Oct 2026
     tags: [security, cryptography, post-quantum, systems, os, ipc]
-    pitch: Authenticated, encrypted IPC with classical, hybrid and post-quantum (NIST FIPS 203/204) modes, benchmarked under 7 attacks.
+    pitch: Encrypted, authenticated IPC in classical, post-quantum (ML-KEM, ML-DSA) and hybrid modes that detected 21/21 attacks in an attack harness.
     bullets:
-      - Built mutually authenticated IPC over pipes and Unix sockets with AES-256-GCM, replay protection and a public-key registry.
-      - Implemented classical (X25519/Ed25519), post-quantum (ML-KEM-768/ML-DSA-65) and hybrid HKDF key establishment.
-      - Evaluated 7 attacks across 3 modes and benchmarked handshake latency, throughput, CPU and memory.
-  - name: MoodSpace — Secure AI-Powered Social Platform
-    stack: [FastAPI, PostgreSQL, PostGIS, pgvector, Docker, Alembic]
-    url: https://github.com/deepanshu214/moodspace
-    tags: [backend, api, ai, security, databases, geospatial]
-    pitch: A FastAPI/Postgres social backend with JWT auth, PostGIS geo queries and encrypted journal storage.
-    bullets:
-      - Architected a modular FastAPI + PostgreSQL backend managed via Docker and Alembic migrations.
-      - Implemented stateless JWT access/refresh authentication with bcrypt hashing (cost 12).
-      - Engineered PostGIS ST_DWithin radius-based location APIs and an AES-256-GCM encryption pipeline for journals.
-  - name: Margdarshak
-    stack: [Python, JavaScript, HTML, CSS, Web Scraping]
-    url: https://github.com/deepanshu214/MargDarshak-AI
-    tags: [ai, recommendation, edtech, web, scraping]
-    pitch: An AI career-path recommender with automated scholarship matching (VIT hackathon).
-    bullets:
-      - Co-developed an AI recommendation system producing aptitude-based career paths and learning roadmaps.
-      - Built automated scholarship matching using web scraping to index active government schemes.
-  - name: Library Management System
-    stack: [C++, Data Structures, HTML, CSS]
-    url: https://github.com/deepanshu214/Library-management-system
-    tags: [dsa, cpp, systems]
-    pitch: A C++ library system built on hash maps, doubly linked lists and BSTs.
-    bullets:
-      - Built search and allocation logic on hash maps, doubly linked lists and binary search trees.
-      - Optimized high-frequency lookups and shipped an HTML/CSS front end on Netlify.
-  - name: Student Performance Analyzer
-    stack: [Python, Random Forest, scikit-learn]
+      - Built encrypted, authenticated IPC in classical, post-quantum (ML-KEM, ML-DSA) and hybrid modes
+      - "Attack harness (forged process, tampering, replay, bad ciphertext): 21/21 attacks detected in all three modes"
+  - name: EV Solar Highway
+    stack: [Python, MetaDrive (Panda3D), K-Means, BFS]
     url: ""
-    tags: [ml, data]
-    pitch: A Random Forest model predicting student performance from academic data.
+    note: Faculty research project   # shown instead of a GitHub link (repo stays private)
+    dates: Sep 2026
+    tags: [simulation, research, ev, energy, ml, algorithms, data]
+    pitch: A 3D driving simulation where an EV decides in real time whether to charge from solar-powered roadside chargers, reroute or request help.
     bullets:
-      - Developed a Random Forest classifier with feature engineering to extract predictive patterns from academic datasets.
+      - Built a 3D driving simulation where an EV talks to roadside chargers powered by surplus rooftop solar from 100 homes and decides in real time whether to charge, reroute or request help
+      - Modelled grid losses with BFS over a 100×100 electrical mesh and clustered homes with K-Means; 70+ unit tests
+  - name: NetGuard
+    stack: [Python, Scapy, Flask-SocketIO, Chart.js]
+    url: https://github.com/deepanshu214/NetGuard
+    dates: Sep 2026
+    tags: [security, networking, ids, soc, realtime, systems, backend]
+    pitch: A real-time intrusion detection system with 6 stateful detectors, a µ + 2σ traffic baseline and one-click firewall blocking.
+    bullets:
+      - Built a real-time intrusion detection system with 6 stateful detectors for port scans, floods and DNS tunneling
+      - Added a µ + 2σ traffic baseline, one-click firewall blocking (iptables, pfctl, netsh) and per-incident PCAP export
 
 certifications:
-  - AWS Certified AI Practitioner — Amazon Web Services (Sep 2026)
+  - text: AWS Certified AI Practitioner (AIF-C01), Amazon Web Services – scored 1000/1000
+    url: https://www.credly.com/badges/fb353ef8-1ff0-42ae-bb48-77ce7945ffb8/public_url
+    dates: Sep 2026
 
 achievements:
-  - President, School Technical Team (Class XII) — led the team to multiple technical event wins.
-  - CBSE Academic Excellence Award (Chemistry) — 99/100.
+  - Top 18 of 200+ teams, Code2Create hackathon (ACM-VIT)
+  - 3rd Place, SharkTech Hackathon, VIT
+
+# ---------------------------------------------------------------------------------------------------------------
+# Archive: left off the October 2026 resume on purpose. The bot ignores everything below; move an item back up to
+# use it again.
+archive:
+  experience:
+    - org: HexSoftwares
+      role: Web Developer Intern
+      dates: Apr 2026 – May 2026
+      note: removed (read as a certificate-style virtual internship)
+  projects:
+    - name: Margdarshak
+      url: https://github.com/deepanshu214/MargDarshak-AI
+      bullets:
+        - Co-developed an AI recommendation system producing aptitude-based career paths and learning roadmaps.
+        - Built automated scholarship matching using web scraping to index active government schemes.
+    - name: Library Management System
+      url: https://github.com/deepanshu214/Library-management-system
+      bullets:
+        - Built search and allocation logic on hash maps, doubly linked lists and binary search trees.
+    - name: Student Performance Analyzer
+      bullets:
+        - Developed a Random Forest classifier with feature engineering to extract predictive patterns from academic datasets.
+  achievements:
+    - President, School Technical Team (Class XII)
+    - CBSE Academic Excellence Award (Chemistry), 99/100

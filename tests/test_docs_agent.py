@@ -23,7 +23,9 @@ def db(tmp_path, monkeypatch, make_db):
 
 def test_prep_pack_and_cover_letter(db):
     prep = db.get("documents", docs.prep_pack(db, db.job_id))["content"]
-    assert "## Likely technical questions" in prep and "Kafka" in prep and "MoodSpace" in prep
+    from worker.config import PROFILE
+    assert "## Likely technical questions" in prep and "Kafka" in prep
+    assert any(p["name"] in prep for p in PROFILE["projects"] if p.get("outreach", True))  # talking points: a real project
     letter = db.get("documents", docs.cover_letter(db, db.job_id))["content"]
     assert letter.startswith("Dear Acme Hiring Team") and "Kafka" not in letter
 

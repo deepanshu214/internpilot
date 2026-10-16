@@ -10,7 +10,7 @@ rules:
   - {match: "phone|mobile|contact number|whatsapp", value: "{phone}"}
   - {match: "linkedin", value: "{linkedin}"}
   - {match: "github", value: "{github}"}
-  - {match: "website|portfolio|personal (site|url)|other (link|url)", value: "{github}"}
+  - {match: "website|portfolio|personal (site|url)|other (link|url)", value: "{portfolio}"}
   # Education
   - {match: "school|university|college|institution", value: "Vellore Institute of Technology"}
   - {match: "discipline|major|field of study|branch|specialization", value: "Computer Science and Engineering (Information Security)"}

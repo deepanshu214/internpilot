@@ -65,7 +65,8 @@ def profile_values() -> dict:
     first, _, last = PROFILE["name"].partition(" ")
     return {"name": PROFILE["name"], "first_name": first, "last_name": last, "email": PROFILE["email"],
             "phone": PROFILE["phone"], "linkedin": PROFILE["links"].get("linkedin", ""),
-            "github": PROFILE["links"].get("github", ""), "grad_year": str(PROFILE["grad_year"])}
+            "github": PROFILE["links"].get("github", ""), "portfolio": PROFILE["links"].get("portfolio", "")
+            or PROFILE["links"].get("github", ""), "grad_year": str(PROFILE["grad_year"])}
 
 
 def answer_for(label: str, rules: list[dict], values: dict | None = None) -> str | None:

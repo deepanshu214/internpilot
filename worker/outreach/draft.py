@@ -16,9 +16,11 @@ PLACEHOLDER = re.compile(r"\[[^\]]*\]|\{[^}]*\}|<[^>]+>|\bXX+\b|lorem", re.I)
 
 def pick_project(job: dict) -> dict:
     """The profile project most relevant to this job (same ranking the resume tailor uses)."""
-    sel = heuristic_selection(f"{job['title']} {job.get('jd_text') or ''}", max_projects=1, title=job["title"])
-    name = sel["projects"][0]["name"]
-    return next(p for p in PROFILE["projects"] if p["name"] == name)
+    sel = heuristic_selection(f"{job['title']} {job.get('jd_text') or ''}", max_projects=len(PROFILE["projects"]),
+                              title=job["title"])
+    pitchable = {p["name"]: p for p in PROFILE["projects"] if p.get("outreach", True)}
+    name = next(e["name"] for e in sel["projects"] if e["name"] in pitchable)
+    return pitchable[name]
 
 
 def first_name(contact: dict | None) -> str | None:

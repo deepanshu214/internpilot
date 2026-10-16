@@ -89,14 +89,17 @@ def test_pipeline_drops_non_web_links(monkeypatch, make_db):
 def test_rewrites_that_change_meaning_are_rejected():
     from worker.config import PROFILE
     from worker.tailor.validate import check_bullet
-    adieks, hexs = PROFILE["experience"][0], PROFILE["experience"][1]
-    # Real outputs from the live model (Oct 2026): undersold and invented wording → rejected
-    assert check_bullet("Assisted in developing backend functionality for processing text data and real-time sentiment "
-                        "extraction.", adieks["bullets"][0], adieks)
-    assert check_bullet("Integrated REST APIs and third-party services into web applications.", hexs["bullets"][1], hexs)
-    # Faithful reordering → accepted
-    assert check_bullet("Developed backend modules for content moderation and secure data processing.",
-                        adieks["bullets"][1], adieks) is None
+    adieks = PROFILE["experience"][0]
+    volt = next(p for p in PROFILE["projects"] if p["name"] == "VoltSentry")
+    # Undersold (the live model once turned "Built…" into "Assisted in…") → rejected
+    assert check_bullet("Assisted in building the backend of MoodSpace, a mood-tracking social app, with FastAPI, "
+                        "SQLAlchemy and Alembic", adieks["bullets"][0], adieks)
+    # Invented wording ("third-party fleets" appears nowhere in the profile) → rejected
+    assert check_bullet("Built an inline OCPP 1.6-J security proxy that screens EV-charger traffic for third-party fleets",
+                        volt["bullets"][0], volt)
+    # Faithful shortening → accepted
+    assert check_bullet("Secured the API with JWT access/refresh tokens and bcrypt (cost 12), and encrypted private "
+                        "journal notes with AES-256-GCM", adieks["bullets"][1], adieks) is None
 
 
 def test_parked_and_lookalike_domains_rejected():

@@ -9,8 +9,8 @@ from pypdf import PdfReader
 from ..config import PROFILE
 
 TEMPLATE = Path(__file__).with_name("resume.typ")
-GROUP_NAMES = {"core_cs": "Core CS", "languages": "Languages", "web": "Frameworks / Web", "databases": "Databases",
-               "ml": "Machine Learning", "security": "Security", "tools": "Developer Tools"}
+GROUP_NAMES = {"languages": "Languages", "security": "Security", "web": "Backend & Web", "ml": "AI/ML",
+               "tools": "Tools", "core_cs": "Core CS", "databases": "Databases"}
 
 
 def _display_name(name: str, stack: list[str]) -> str:
@@ -18,25 +18,42 @@ def _display_name(name: str, stack: list[str]) -> str:
     return name.split(" — ")[0] if len(name) + len(", ".join(stack)) > 95 else name
 
 
+def _bare(url: str) -> str:
+    """https://www.linkedin.com/in/x → linkedin.com/in/x (how the resume prints links)."""
+    return url.split("://", 1)[-1].removeprefix("www.").rstrip("/")
+
+
+def contact_lines(p: dict) -> list[list[dict]]:
+    links = p.get("links", {})
+    line1 = [{"label": p["phone"], "url": ""}, {"label": p["email"], "url": f"mailto:{p['email']}"}]
+    if links.get("linkedin"):
+        line1.append({"label": _bare(links["linkedin"]), "url": links["linkedin"]})
+    line2 = [{"label": _bare(links[k]), "url": links[k]} for k in ("github", "portfolio") if links.get(k)]
+    line2 += [{"label": _bare(v), "url": v} for k, v in links.items() if k not in ("linkedin", "github", "portfolio") and v]
+    return [line for line in (line1, line2) if line]
+
+
 def template_data(sel: dict) -> dict:
     p = PROFILE
-    links = p.get("links", {})
-    contacts = [{"label": p["phone"], "url": ""}, {"label": p["email"], "url": f"mailto:{p['email']}"}]
-    contacts += [{"label": k.title() if k != "github" else "GitHub", "url": v} for k, v in links.items() if v]
     exp = {e["org"]: e for e in p["experience"]}
     proj = {x["name"]: x for x in p["projects"]}
+    hidden = set(p.get("skills_hidden", []))
+    certs = [c if isinstance(c, dict) else {"text": c} for c in sel.get("certifications", p.get("certifications", []))]
     return {
         "name": p["name"],
-        "contacts": contacts,
-        "summary": sel["summary"],
-        "education": p["education"],
-        "experience": [{"name": e["name"], "role": exp[e["name"]]["role"], "dates": exp[e["name"]]["dates"],
+        "contact_lines": contact_lines(p),
+        "education": [{"school": e["school"], "location": e.get("location", ""), "detail": e.get("detail", ""),
+                       "dates": e.get("dates", ""), "coursework": e.get("coursework", "")} for e in p["education"]],
+        "experience": [{"org": e["name"], "role": exp[e["name"]]["role"], "dates": exp[e["name"]]["dates"],
+                        "location": exp[e["name"]].get("location", ""),
                         "bullets": [b for b in e["bullets"] if b]} for e in sel["experience"]],
         "projects": [{"name": _display_name(x["name"], proj[x["name"]]["stack"]), "stack": proj[x["name"]]["stack"],
-                      "url": proj[x["name"]].get("url") or "",
+                      "url": proj[x["name"]].get("url") or "", "note": proj[x["name"]].get("note") or "",
+                      "dates": proj[x["name"]].get("dates") or "",
                       "bullets": [b for b in x["bullets"] if b]} for x in sel["projects"]],
-        "skills": {GROUP_NAMES.get(g, g.replace("_", " ").title()): items for g, items in sel["skills"].items() if items},
-        "certifications": sel.get("certifications", p.get("certifications", [])),
+        "skills": {GROUP_NAMES.get(g, g.replace("_", " ").title()): items
+                   for g, items in sel["skills"].items() if items and g not in hidden},
+        "certifications": [{"text": c["text"], "url": c.get("url", ""), "dates": c.get("dates", "")} for c in certs],
         "achievements": sel.get("achievements", p.get("achievements", [])),
     }
 
