@@ -53,3 +53,54 @@ def test_offline_errors_are_recognised():
     except requests.ConnectionError as e:
         assert offline(e)
     assert not offline(ValueError("bad data"))
+    import psycopg
+    assert offline(psycopg.OperationalError("consuming input failed: could not receive data from server: Operation timed out"))
+
+
+def test_db_reconnects_after_network_drop():
+    """After the Mac sleeps, psycopg's connection is wedged ("another command is already in progress");
+    the worker must open a fresh one instead of failing every tick forever."""
+    import psycopg
+
+    class Conn:
+        def __init__(self, fail):
+            self.fail, self.closed, self.broken = fail, False, False
+
+        def cursor(self):
+            conn = self
+
+            class Cur:
+                def execute(self, sql, params):
+                    if conn.fail:
+                        raise psycopg.OperationalError("another command is already in progress")
+            return Cur()
+
+        def close(self):
+            self.closed = True
+
+    db = DB.__new__(DB)
+    db.pg, db.conn = True, Conn(fail=True)
+    wedged, fresh = db.conn, []
+    db._connect = lambda: (fresh.append(Conn(fail=False)), setattr(db, "conn", fresh[-1]))
+    db.execute("select 1")
+    assert wedged.closed and db.conn is fresh[0]
+
+    # Reconnect itself failed (still offline): the next call tries again instead of reusing the dead connection.
+    db.conn.closed = True
+    db.execute("select 1")
+    assert len(fresh) == 2
+
+    # Ordinary SQL errors are not retried.
+    class Bad(Conn):
+        def cursor(self):
+            class Cur:
+                def execute(self, sql, params):
+                    raise psycopg.errors.SyntaxError("bad sql")
+            return Cur()
+    db.conn = Bad(fail=False)
+    try:
+        db.execute("selec 1")
+        raise AssertionError("expected a SyntaxError")
+    except psycopg.errors.SyntaxError:
+        pass
+    assert len(fresh) == 2

@@ -57,15 +57,27 @@ class DB:
     def _sql(self, sql: str) -> str:
         return sql.replace("?", "%s") if self.pg else sql
 
+    def _reconnect(self):
+        try:
+            self.conn.close()
+        except Exception:
+            pass
+        self._connect()
+
     def execute(self, sql: str, params=()):
+        if self.pg and (self.conn.closed or self.conn.broken):
+            self._reconnect()  # an earlier reconnect failed (still offline): try again now
         try:
             cur = self.conn.cursor()
             cur.execute(self._sql(sql), params)
         except Exception as e:
-            # Long-running worker: the Supabase pooler drops idle connections. Reconnect once.
-            if not self.pg or "closed" not in str(e).lower() and "connection" not in str(e).lower():
+            # Long-running worker: Supabase drops idle connections, and the Mac sleeps or switches networks.
+            # After any connection-level error psycopg's connection is unusable ("another command is already
+            # in progress"), so open a fresh one and retry once.
+            import psycopg
+            if not self.pg or not isinstance(e, (psycopg.OperationalError, psycopg.InterfaceError)):
                 raise
-            self._connect()
+            self._reconnect()
             cur = self.conn.cursor()
             cur.execute(self._sql(sql), params)
         if not self.pg:

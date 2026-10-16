@@ -60,6 +60,10 @@ def offline(e: BaseException) -> bool:
         if isinstance(e, (requests.ConnectionError, requests.Timeout, ConnectionError, TimeoutError)) or \
                 "NameResolution" in type(e).__name__ or "nodename nor servname" in str(e):
             return True
+        if type(e).__module__.startswith("psycopg") and any(
+                m in str(e) for m in ("could not receive data", "could not send data", "connection failed",
+                                      "Can't assign requested address", "timed out", "server closed")):
+            return True  # database unreachable; the next tick reconnects
         e = e.__cause__ or e.__context__
     return False
 
