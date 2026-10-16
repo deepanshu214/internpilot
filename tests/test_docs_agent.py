@@ -38,3 +38,16 @@ def test_agent_tick_runs_queue_and_is_rate_limited(db, monkeypatch):
     assert calls == ["discover"]                       # second tick: not due yet
     assert db.one("select status from tasks")["status"] == "done"
     assert db.kv_get("worker_heartbeat")
+
+
+def test_offline_errors_are_recognised():
+    import requests
+    from worker.agent import offline
+    try:
+        try:
+            raise OSError("[Errno 8] nodename nor servname provided, or not known")
+        except OSError as inner:
+            raise requests.ConnectionError("Max retries exceeded") from inner
+    except requests.ConnectionError as e:
+        assert offline(e)
+    assert not offline(ValueError("bad data"))

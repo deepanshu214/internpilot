@@ -24,8 +24,13 @@ def copy(source_path: str, target: DB) -> dict:
         rows = src.execute(f"select {', '.join(cols)} from {table}").fetchall()
         sql = (f"insert into {table} ({', '.join(cols)}) values ({', '.join('?' * len(cols))})"
                f" on conflict ({KEYS.get(table, 'id')}) do nothing")
-        for r in rows:
-            target.execute(sql, tuple(r))
+        if target.pg:  # one batched round trip per chunk: the database may be far away
+            with target.conn.cursor() as cur:
+                for i in range(0, len(rows), 200):
+                    cur.executemany(target._sql(sql), [tuple(r) for r in rows[i:i + 200]])
+        else:
+            for r in rows:
+                target.execute(sql, tuple(r))
         counts[table] = len(rows)
     return counts
 

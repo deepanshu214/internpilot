@@ -51,11 +51,27 @@ def gmail_watch(db: DB):
                       f"<code>{html.escape(gmail.REAUTH)}</code>")
 
 
+def offline(e: BaseException) -> bool:
+    """Network outage (Mac asleep / Wi-Fi down): worth one log line, not a traceback."""
+    import requests
+    seen = set()
+    while e is not None and id(e) not in seen:
+        seen.add(id(e))
+        if isinstance(e, (requests.ConnectionError, requests.Timeout, ConnectionError, TimeoutError)) or \
+                "NameResolution" in type(e).__name__ or "nodename nor servname" in str(e):
+            return True
+        e = e.__cause__ or e.__context__
+    return False
+
+
 def safely(name: str, fn, *args):
     try:
         return fn(*args)
-    except Exception:
-        log.exception("%s failed", name)
+    except Exception as e:
+        if offline(e):
+            log.warning("%s skipped: network unavailable", name)
+        else:
+            log.exception("%s failed", name)
 
 
 def tick(db: DB, discover_hours: float = 3) -> None:
@@ -69,8 +85,11 @@ def tick(db: DB, discover_hours: float = 3) -> None:
             log.info("inbox: %s", inbox.run(db))
         except gmail.AuthExpired:
             log.warning("gmail login expired")
-        except Exception:
-            log.exception("inbox failed")
+        except Exception as e:
+            if offline(e):
+                log.warning("inbox skipped: network unavailable")
+            else:
+                log.exception("inbox failed")
     safely("gmail-watch", gmail_watch, db)
     if due(db, "followups", 6 * 3600):
         safely("followups", followup.run, db)
