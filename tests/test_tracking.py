@@ -170,6 +170,10 @@ def test_gmail_reminder_before_7_day_expiry(tmp_path, monkeypatch, make_db, quie
     monkeypatch.setattr(gmail, "GMAIL_TOKEN", token)
     monkeypatch.setattr(gmail, "_expired_mtime", None)
     db = make_db()
+    monkeypatch.setitem(agent.SETTINGS["tracking"], "gmail_app_in_testing", False)
+    agent.gmail_watch(db)
+    assert not any("expires in about a day" in t for t in quiet)   # published app: logins don't expire
+    monkeypatch.setitem(agent.SETTINGS["tracking"], "gmail_app_in_testing", True)
     agent.gmail_watch(db)
     agent.gmail_watch(db)
     assert sum("expires in about a day" in t for t in quiet) == 1
