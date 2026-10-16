@@ -102,8 +102,15 @@ def gmail():
     if not config.GMAIL_TOKEN.exists():
         return WARN, "credentials found; now run scripts/gmail_auth.py"
     from worker import gmail as g
-    prof = g.service().users().getProfile(userId="me").execute()
-    return OK, f"authorized as {prof['emailAddress']}"
+    try:
+        prof = g._execute(g.service().users().getProfile(userId="me"))
+    except g.AuthExpired:
+        return BAD, f"login expired; reconnect: {g.REAUTH}"
+    import time as _t
+    age = (_t.time() - config.GMAIL_TOKEN.stat().st_mtime) / 86400
+    note = (f"; login renewed {age:.0f} day(s) ago (expires at 7 while the Google app is in Testing)"
+            if config.SETTINGS["tracking"].get("gmail_app_in_testing", True) else "")
+    return OK, f"authorized as {prof['emailAddress']}{note}"
 
 
 def sending():

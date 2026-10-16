@@ -129,3 +129,47 @@ def test_digest_once_per_day_and_weekly(db, quiet):
     assert "Daily digest" in quiet[0] and "Weekly review" in quiet[1]
     assert db.one("select count(*) n from documents where kind = 'weekly_report'")["n"] == 1
     assert digest.maybe_send(db, datetime(2026, 10, 19, 9, 0)) == []   # before 21:00
+
+
+def test_gmail_expiry_is_detected_and_reported(tmp_path, monkeypatch, make_db, quiet, real_gmail_state):
+    import os
+    import time
+    from google.auth.exceptions import RefreshError
+    from worker import agent
+    token = tmp_path / "gmail_token.json"
+    token.write_text("{}")
+    monkeypatch.setattr(gmail, "GMAIL_TOKEN", token)
+    monkeypatch.setattr(gmail, "_expired_mtime", None)
+
+    class Req:
+        def execute(self):
+            raise RefreshError("invalid_grant: Token has been expired or revoked.")
+
+    with pytest.raises(gmail.AuthExpired):
+        gmail._execute(Req())
+    assert gmail.expired()
+    db = make_db()
+    agent.gmail_watch(db)
+    agent.gmail_watch(db)
+    assert sum("Gmail login expired" in t for t in quiet) == 1      # once per day
+    # Re-running gmail_auth.py writes a new token file → available again without a restart
+    time.sleep(0.01)
+    token.write_text("{}")
+    os.utime(token, (time.time() + 5, time.time() + 5))
+    assert not gmail.expired()
+
+
+def test_gmail_reminder_before_7_day_expiry(tmp_path, monkeypatch, make_db, quiet, real_gmail_state):
+    import os
+    import time
+    from worker import agent
+    token = tmp_path / "gmail_token.json"
+    token.write_text("{}")
+    old = time.time() - 6.2 * 86400
+    os.utime(token, (old, old))
+    monkeypatch.setattr(gmail, "GMAIL_TOKEN", token)
+    monkeypatch.setattr(gmail, "_expired_mtime", None)
+    db = make_db()
+    agent.gmail_watch(db)
+    agent.gmail_watch(db)
+    assert sum("expires in about a day" in t for t in quiet) == 1

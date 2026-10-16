@@ -14,21 +14,59 @@ SCOPES = ["https://www.googleapis.com/auth/gmail.send", "https://www.googleapis.
 _service = None
 
 
+REAUTH = "cd ~/Desktop/internpilot && .venv/bin/python scripts/gmail_auth.py"
+_expired_mtime: float | None = None  # token file mtime when Google rejected it
+
+
+class AuthExpired(Exception):
+    """Google revoked/expired the login (every 7 days while the Google app is in Testing). Re-run gmail_auth.py."""
+
+
 def available() -> bool:
-    return GMAIL_TOKEN.exists()
+    if not GMAIL_TOKEN.exists():
+        return False
+    # A fresh login (new token file) clears an earlier expiry without restarting the worker.
+    return _expired_mtime is None or GMAIL_TOKEN.stat().st_mtime != _expired_mtime
+
+
+def expired() -> bool:
+    return GMAIL_TOKEN.exists() and not available()
+
+
+def _mark_expired():
+    global _expired_mtime, _service
+    _expired_mtime = GMAIL_TOKEN.stat().st_mtime if GMAIL_TOKEN.exists() else None
+    _service = None
+
+
+def _execute(request):
+    from google.auth.exceptions import RefreshError
+    try:
+        return request.execute()
+    except RefreshError as e:
+        _mark_expired()
+        raise AuthExpired(f"Gmail login expired: run {REAUTH}") from e
 
 
 def service():
-    global _service
+    global _service, _expired_mtime
+    if _service is not None and _expired_mtime is not None and available():
+        _service, _expired_mtime = None, None  # re-authorized since the expiry: rebuild with the new token
     if _service is None:
+        from google.auth.exceptions import RefreshError
         from google.auth.transport.requests import Request
         from google.oauth2.credentials import Credentials
         from googleapiclient.discovery import build
 
         creds = Credentials.from_authorized_user_file(str(GMAIL_TOKEN), SCOPES)
         if creds.expired and creds.refresh_token:
-            creds.refresh(Request())
+            try:
+                creds.refresh(Request())
+            except RefreshError as e:
+                _mark_expired()
+                raise AuthExpired(f"Gmail login expired: run {REAUTH}") from e
             GMAIL_TOKEN.write_text(creds.to_json())
+            GMAIL_TOKEN.chmod(0o600)
         _service = build("gmail", "v1", credentials=creds, cache_discovery=False)
     return _service
 
@@ -39,8 +77,9 @@ def authorize():
 
     flow = InstalledAppFlow.from_client_secrets_file(str(GMAIL_CREDENTIALS), SCOPES)
     creds = flow.run_local_server(port=0)
-    GMAIL_TOKEN.parent.mkdir(parents=True, exist_ok=True)
+    GMAIL_TOKEN.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
     GMAIL_TOKEN.write_text(creds.to_json())
+    GMAIL_TOKEN.chmod(0o600)
     return creds
 
 
@@ -77,7 +116,7 @@ def send(to: str, subject: str, body: str, attachments=(), thread_id: str | None
     body_ = {"raw": raw}
     if thread_id:
         body_["threadId"] = thread_id
-    sent = service().users().messages().send(userId="me", body=body_).execute()
+    sent = _execute(service().users().messages().send(userId="me", body=body_))
     return {"id": sent["id"], "threadId": sent.get("threadId"), "dry_run": False}
 
 
@@ -85,8 +124,8 @@ def search(query: str, max_results: int = 100) -> list[str]:
     """Message ids matching a Gmail search query (e.g. 'newer_than:14d from:greenhouse.io')."""
     ids, token = [], None
     while len(ids) < max_results:
-        resp = service().users().messages().list(userId="me", q=query, pageToken=token,
-                                                 maxResults=min(100, max_results - len(ids))).execute()
+        resp = _execute(service().users().messages().list(userId="me", q=query, pageToken=token,
+                                                          maxResults=min(100, max_results - len(ids))))
         ids += [m["id"] for m in resp.get("messages", [])]
         token = resp.get("nextPageToken")
         if not token:
@@ -95,12 +134,12 @@ def search(query: str, max_results: int = 100) -> list[str]:
 
 
 def thread_message_count(thread_id: str) -> int:
-    t = service().users().threads().get(userId="me", id=thread_id, format="minimal").execute()
+    t = _execute(service().users().threads().get(userId="me", id=thread_id, format="minimal"))
     return len(t.get("messages", []))
 
 
 def get(message_id: str) -> dict:
-    m = service().users().messages().get(userId="me", id=message_id, format="full").execute()
+    m = _execute(service().users().messages().get(userId="me", id=message_id, format="full"))
     return parse_message(m)
 
 

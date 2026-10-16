@@ -14,7 +14,10 @@ os.environ["OLLAMA_URL"] = "http://127.0.0.1:9"  # nothing listens here
 
 import pytest  # noqa: E402
 
+from worker import gmail as _gmail  # noqa: E402
 from worker.db import DB  # noqa: E402
+
+_REAL_GMAIL_AVAILABLE = _gmail.available
 
 TEST_PG = os.getenv("TEST_DATABASE_URL", "")
 
@@ -29,6 +32,12 @@ def no_live_services(monkeypatch):
     from worker import config, gmail
     assert not config.TELEGRAM_BOT_TOKEN and not config.GROQ_API_KEY and not config.GEMINI_API_KEY
     monkeypatch.setattr(gmail, "available", lambda: False)
+
+
+@pytest.fixture
+def real_gmail_state(monkeypatch):
+    """Use the real token-file/expiry logic (tests pass their own temp token file)."""
+    monkeypatch.setattr(_gmail, "available", _REAL_GMAIL_AVAILABLE)
 
 
 @pytest.fixture
