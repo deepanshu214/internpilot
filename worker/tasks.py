@@ -1,4 +1,5 @@
 """Task queue: the dashboard and Telegram buttons insert rows into `tasks`; the worker on your Mac runs them."""
+import html
 import importlib
 import json
 import logging
@@ -42,7 +43,7 @@ def prepare_task(db: DB, task: dict) -> dict:
 def _notify(db: DB, task: dict, result: dict):
     kind, job_id = task["kind"], task.get("job_id")
     job = db.get("jobs", job_id) if job_id else None
-    where = f"{job['title']} @ {job['company']}" if job else ""
+    where = html.escape(f"{job['title']} @ {job['company']}") if job else ""
     link = f"\n{DASHBOARD_URL}/jobs/{job_id}" if DASHBOARD_URL and job_id else ""
     if kind == "draft_outreach" and result.get("drafts"):
         telegram.send(f"📝 {len(result['drafts'])} email draft(s) ready for {where}. Review & approve.{link}")
@@ -68,7 +69,7 @@ def run_one(db: DB) -> dict | None:
                                         "finished_at": now()})
         db.log("task-failed", f"{task['kind']}: {e}\n{traceback.format_exc(limit=3)}", task.get("job_id"))
         if type(e).__name__ != "NotAllowed":
-            telegram.send(f"⚠️ {task['kind']} failed: {e}")
+            telegram.send(html.escape(f"⚠️ {task['kind']} failed: {e}"))
         task["status"], task["error"] = "failed", str(e)
     return task
 

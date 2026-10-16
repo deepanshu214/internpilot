@@ -1,10 +1,9 @@
 """Entry point.  `python -m worker.scheduler --once` for a single run (what launchd calls),
 `python -m worker.scheduler` to loop every N hours in the foreground."""
 import argparse
-import logging
 import time
 
-from . import llm
+from . import llm, logsafe
 from .db import DB
 from .pipeline import run_once
 
@@ -14,8 +13,7 @@ def main():
     ap.add_argument("--once", action="store_true")
     ap.add_argument("--every-hours", type=float, default=3)
     args = ap.parse_args()
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
-    logging.getLogger("JobSpy").setLevel(logging.WARNING)
+    logsafe.setup()
 
     db = DB()
     llm.use_db(db)

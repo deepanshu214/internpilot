@@ -23,6 +23,11 @@ BOARD_HOSTS = ("greenhouse.io", "lever.co", "ashbyhq.com", "linkedin.com", "inde
 SUFFIXES = r"\b(inc|llc|ltd|limited|pvt|private|corp|corporation|co|company|technologies|technology|tech|solutions|" \
            r"labs|software|systems|services|india|global|group|ai)\b\.?"
 TLDS = (".com", ".in", ".ai", ".io", ".co", ".tech", ".app", ".dev")
+LEGAL = r"\b(inc|llc|ltd|limited|pvt|private|corp|corporation|co|company|plc|llp|gmbh)\b\.?"
+# Parked / for-sale pages mention the company name (it's in the domain) but nobody there will read your email.
+PARKED = re.compile(r"domain\s+(?:name\s+)?(?:may\s+be\s+|is\s+)?for\s+sale|buy\s+this\s+domain|this\s+domain\s+is\s+parked|"
+                    r"parked\s+(?:free|domain)|sedoparking|hugedomains|afternic|dan\.com|domain\s+has\s+expired|"
+                    r"related\s+searches|this\s+domain\s+(?:name\s+)?is\s+available", re.I)
 
 
 def norm_company(name: str) -> str:
@@ -36,10 +41,18 @@ def has_mx(domain: str) -> bool:
         return False
 
 
+def public_hostname(host: str) -> bool:
+    """Real internet domains only: no IP literals, localhost or single-label/internal names."""
+    host = (host or "").lower().rstrip(".")
+    if not host or "." not in host or host.endswith((".local", ".internal", ".lan", ".localhost")) or host == "localhost":
+        return False
+    return not re.fullmatch(r"[\d.]+|\[?[0-9a-f:]+\]?", host)
+
+
 def candidate_domains(company: str, job_url: str = "") -> list[str]:
     out = []
     host = urlparse(job_url or "").hostname or ""
-    if host and not any(b in host for b in BOARD_HOSTS):
+    if host and public_hostname(host) and not any(b in host for b in BOARD_HOSTS):
         out.append(re.sub(r"^(www|careers|jobs|apply)\.", "", host))
     base = norm_company(company)
     core = re.sub(SUFFIXES, " ", base).split()
@@ -62,12 +75,30 @@ def _site_matches(domain: str, company: str) -> str | None:
         return None
     if r.status_code >= 400 or "html" not in r.headers.get("content-type", ""):
         return None
-    words = [w for w in re.sub(SUFFIXES, " ", norm_company(company)).split() if len(w) >= 3]
-    page = r.text[:200_000].lower()
-    head = page[:20_000]
-    if words and any(w in head for w in words):
-        return r.text
-    return None
+    return r.text if site_belongs_to(domain, company, r.text) else None
+
+
+def site_belongs_to(domain: str, company: str, html_text: str) -> bool:
+    """Strict check that a homepage is really this company's, so outreach never goes to a look-alike or parked domain.
+    Accept when the domain spells the full company name (dexterstech.com for "Dexter's Tech"), or the page's
+    title/site name contains the full name, or the domain is the core name and the title says so too."""
+    if PARKED.search(html_text[:60_000]):
+        return False
+    soup = BeautifulSoup(html_text[:200_000], "html.parser")
+    names = [soup.title.string if soup.title and soup.title.string else ""]
+    for attr in ({"property": "og:site_name"}, {"property": "og:title"}, {"name": "application-name"}):
+        m = soup.find("meta", attrs=attr)
+        if m and m.get("content"):
+            names.append(m["content"])
+    titles = norm_company(" ".join(names))
+    full = re.sub(LEGAL, " ", norm_company(company)).split()          # "dexter s tech"
+    core = re.sub(SUFFIXES, " ", " ".join(full)).split()                # "dexter s"
+    stem = re.sub(r"[^a-z0-9]", "", domain.lower().removeprefix("www.").split(".")[0])
+    if not full:
+        return False
+    if "".join(full) in stem or re.search(rf"\b{re.escape(' '.join(full))}\b", titles):
+        return True
+    return bool(core) and stem == "".join(core) and re.search(rf"\b{re.escape(' '.join(core))}\b", titles) is not None
 
 
 def find_domain(db: DB, company: str, job_url: str = "") -> str | None:
@@ -75,7 +106,7 @@ def find_domain(db: DB, company: str, job_url: str = "") -> str | None:
     cached = db.get("companies", key, key="name")
     if cached:  # includes "looked before, found nothing" (set the domain by hand in the dashboard)
         return cached.get("domain") or None
-    candidates = candidate_domains(company, job_url)[:14]
+    candidates = [d for d in candidate_domains(company, job_url) if public_hostname(d)][:14]
     with ThreadPoolExecutor(max_workers=8) as pool:
         mx = dict(zip(candidates, pool.map(has_mx, candidates)))
     found = next((d for d in candidates if mx[d] and _site_matches(d, company)), None)

@@ -3,13 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -H 127.0.0.1",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -H 127.0.0.1",
     "lint": "eslint"
   },
   "dependencies": {
-    "next": "15.5.27",
+    "next": "15.5.28",
     "postgres": "^3.4.9",
     "react": "19.1.0",
     "react-dom": "19.1.0"
@@ -21,11 +21,14 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "15.5.27",
+    "eslint-config-next": "15.5.28",
     "tailwindcss": "^4",
     "typescript": "^5"
   },
   "engines": {
     "node": "22.x"
+  },
+  "overrides": {
+    "postcss": "^8.5.30"
   }
 }

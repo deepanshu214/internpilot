@@ -13,7 +13,9 @@ log = logging.getLogger(__name__)
 def run_once(db: DB | None = None, settings=SETTINGS) -> dict:
     db = db or DB()
     fetched, counts = fetch_all(settings)
-    kept = [j for j in fetched if j.title and j.url and filters.keep(j, settings)]
+    # Only web links: a "javascript:" or "file:" URL from a scraped page must never reach the dashboard.
+    kept = [j for j in fetched if j.title and j.url and j.url.lower().startswith(("https://", "http://"))
+            and filters.keep(j, settings)]
 
     unique = {}
     for j in kept:  # dedup within this batch (same role on several boards)

@@ -202,6 +202,9 @@ def _openai_compat(url: str, key: str, model: str, messages, as_json: bool, temp
         except ValueError:
             wait = None
         raise RateLimited(r.text[:200], wait)
+    if r.status_code >= 400:
+        from .logsafe import redact
+        raise requests.HTTPError(f"{r.status_code}: {redact(r.text[:300])}")
     r.raise_for_status()
     data = r.json()
     return data["choices"][0]["message"]["content"], int((data.get("usage") or {}).get("total_tokens") or 0), r.headers
@@ -249,6 +252,8 @@ def _check_groq_plan(model: str, headers):
 
 def _chat(system: str, user: str, purpose: str, as_json: bool, temperature: float, timeout: int) -> str | None:
     global last_provider
+    if as_json and "json" not in (system + user).lower():
+        system += "\nRespond with a single JSON object."
     messages = [{"role": "system", "content": system}, {"role": "user", "content": user}]
     max_tokens = CFG["max_output_tokens"][purpose]
     estimate = (len(system) + len(user)) // 4 + max_tokens

@@ -139,6 +139,9 @@ def llm_email(job, project, contact, brief, variant) -> tuple[str, str] | None:
     f = facts(job, project, brief)
     f["greeting_name"] = first_name(contact) or f"{job['company']} team"
     f["subject_style"] = "lead with the project" if variant == "A" else "lead with the role and university"
+    if not brief:
+        f["company_brief"] = ("NONE. No verified information about this company: do not describe, praise or make any "
+                              "claim about what the company does. Open with the role instead.")
     for _ in range(2):
         out = llm.chat_json(SYSTEM.format(lo=lo, hi=hi), json.dumps(f))
         if not out or not isinstance(out.get("body"), str) or not isinstance(out.get("subject"), str):

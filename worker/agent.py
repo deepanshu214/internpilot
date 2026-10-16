@@ -9,7 +9,8 @@ import logging
 import time
 from datetime import datetime, timezone
 
-from . import gmail, llm, tasks
+from . import gmail, llm, logsafe, tasks
+from .config import ROOT
 from .db import DB, now
 from .notify import digest, telegram_bot
 from .outreach import followup
@@ -52,8 +53,7 @@ def main():
     ap.add_argument("--discover-hours", type=float, default=3)
     ap.add_argument("--interval", type=float, default=10, help="seconds between queue checks")
     args = ap.parse_args()
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
-    logging.getLogger("JobSpy").setLevel(logging.WARNING)
+    logsafe.setup(ROOT / "logs" / "worker.log")
     db = DB()
     llm.use_db(db)  # persist free-tier usage so caps hold across restarts and show in the dashboard
     log.info("worker started (gmail: %s, llm: %s)", gmail.available(), llm.chain("write") or "none")

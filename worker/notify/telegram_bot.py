@@ -8,6 +8,7 @@ import requests
 
 from ..config import DASHBOARD_URL, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
 from ..db import DB
+from ..logsafe import redact
 from . import telegram
 
 log = logging.getLogger(__name__)
@@ -64,7 +65,7 @@ def poll(db: DB) -> int:
     try:
         updates = _api("getUpdates", offset=offset, timeout=0, allowed_updates=json.dumps(["message", "callback_query"]))
     except requests.RequestException as e:
-        log.warning("telegram poll failed: %s", e)
+        log.warning("telegram poll failed: %s", redact(str(e)))
         return 0
     handled = 0
     for u in updates or []:

@@ -9,7 +9,14 @@ from .. import llm
 from ..config import PROFILE
 from ..match.score import bow, cosine
 from ..match.skills import find_skills, profile_skills
-from .validate import ALL_SKILLS, check_bullet, check_text, item_text
+from .validate import ALL_SKILLS, PROFILE_WORDS, _WEAK, check_bullet, check_text, content_words, item_text
+
+
+def summary_wording(summary: str) -> str | None:
+    novel = content_words(summary) - PROFILE_WORDS
+    if novel:
+        return f"adds wording that isn't in your profile: {', '.join(sorted(novel))}"
+    return "undersells you (weaker verb)" if _WEAK.search(summary) else None
 
 log = logging.getLogger(__name__)
 MAX_PROJECTS = 3
@@ -139,7 +146,8 @@ def llm_selection(jd: str, base: dict, title: str = "") -> dict:
 
     summary = out.get("summary")
     if isinstance(summary, str) and summary.strip():
-        reason = check_text(summary, PROFILE["summary"] + " " + " ".join(profile_skills()), max_len=420)
+        reason = (check_text(summary, PROFILE["summary"] + " " + " ".join(profile_skills()), max_len=420)
+                  or summary_wording(summary))
         if reason:
             sel["rejected"].append({"original": "summary", "rewrite": summary, "reason": reason})
         else:

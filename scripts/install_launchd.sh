@@ -4,7 +4,7 @@
 #   launchctl unload ~/Library/LaunchAgents/com.internpilot.worker.plist && rm ~/Library/LaunchAgents/com.internpilot.worker.plist
 set -e
 DIR="$(cd "$(dirname "$0")/.." && pwd)"
-mkdir -p "$DIR/logs"
+mkdir -p "$DIR/logs" && chmod 700 "$DIR/logs"
 PLIST=~/Library/LaunchAgents/com.internpilot.worker.plist
 cat > "$PLIST" <<PL
 <?xml version="1.0" encoding="UTF-8"?>
@@ -18,8 +18,9 @@ cat > "$PLIST" <<PL
   <key>KeepAlive</key><true/>
   <key>RunAtLoad</key><true/>
   <key>ThrottleInterval</key><integer>30</integer>
-  <key>StandardOutPath</key><string>$DIR/logs/worker.log</string>
-  <key>StandardErrorPath</key><string>$DIR/logs/worker.log</string>
+  <key>StandardOutPath</key><string>$DIR/logs/worker.stdout.log</string>
+  <key>StandardErrorPath</key><string>$DIR/logs/worker.stderr.log</string>
+  <key>Umask</key><integer>63</integer>
 </dict></plist>
 PL
 launchctl unload "$PLIST" 2>/dev/null || true

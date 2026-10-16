@@ -210,7 +210,8 @@ def run(job_id: str, headless: bool = False, wait: bool = True) -> dict:
         if confirmed:
             db.set_status(job_id, "applied", applied_at=now())
             from ..notify import telegram
-            telegram.send(f"📨 Applied: {job['title']} @ {job['company']}")
+            import html
+            telegram.send(html.escape(f"📨 Applied: {job['title']} @ {job['company']}"))
         report["confirmed"] = confirmed
         if wait:
             ctx.close()
@@ -227,5 +228,6 @@ def run_task(db: DB, task: dict) -> dict:
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
+    from ..logsafe import setup
+    setup()
     run(sys.argv[1])

@@ -97,7 +97,10 @@ export async function discardDraft(id: string, jobId: string | null) {
 export async function login(_: string | null, form: FormData): Promise<string | null> {
   const pw = String(form.get("password") ?? "");
   const expected = process.env.DASHBOARD_PASSWORD ?? "";
-  if (!expected || !safeEqual(pw, expected)) return "Wrong password";
+  if (!expected || !safeEqual(pw, expected)) {
+    await new Promise((r) => setTimeout(r, 1500)); // slows down password guessing
+    return "Wrong password";
+  }
   (await cookies()).set(COOKIE, await sessionToken(), {
     httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", maxAge: 60 * 60 * 24 * 30, path: "/",
   });
