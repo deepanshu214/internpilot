@@ -50,7 +50,7 @@ apply:
 
 tracking:
   gmail_query_days: 14     # how far back to scan your inbox for application updates
-  gmail_app_in_testing: true   # Google app still in "Testing" → Telegram reminder before the 7-day login expiry.
+  gmail_app_in_testing: false  # Google app published "In production" (16 Oct 2026). Was "Testing" → Telegram reminder before the 7-day login expiry.
                                # Set to false if you publish the app ("In production").
 
 digest:
