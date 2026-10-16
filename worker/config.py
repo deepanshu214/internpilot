@@ -16,7 +16,9 @@ def _yaml(rel):
 SETTINGS = _yaml("config/settings.yaml")
 WATCHLIST = _yaml("config/watchlist.yaml")
 PROFILE = _yaml("profile/profile.yaml")
-PROFILE_ARCHIVE = PROFILE.pop("archive", {})  # left off the resume on purpose: never used for tailoring or emails
+PROFILE_ARCHIVE = PROFILE.pop("archive", {})
+# Contact details that shouldn't live in a public repo come from .env.
+PROFILE["phone"] = os.getenv("PROFILE_PHONE", "") or PROFILE.get("phone", "")  # left off the resume on purpose: never used for tailoring or emails
 
 DATABASE_URL = os.getenv("DATABASE_URL", "")          # Supabase Postgres URL; empty = local SQLite
 SQLITE_PATH = os.getenv("SQLITE_PATH", str(ROOT / "internpilot.db"))

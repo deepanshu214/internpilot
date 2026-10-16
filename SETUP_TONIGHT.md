@@ -72,7 +72,7 @@ Create job alerts, delivered to this Gmail, on: **LinkedIn** (Jobs → search "i
 - ✅ The script prints row counts (about 500 jobs).
 
 ## 8. Deploy the dashboard to Vercel (10 min)
-1. ~~Push to a private GitHub repo~~ Done: https://github.com/deepanshu214/internpilot (private; keep it that way, it has your phone number).
+1. ~~Push to GitHub~~ Done: https://github.com/deepanshu214/internpilot (public; personal details such as your phone number live only in `.env`).
 2. Vercel → Add New Project → import `deepanshu214/internpilot` → **Root Directory: `web`**.
 3. Environment variables:
    - `DATABASE_URL` = the **Transaction pooler** URI from 7.2
@@ -96,7 +96,7 @@ Create job alerts, delivered to this Gmail, on: **LinkedIn** (Jobs → search "i
 | Gemini | backup writer | the API key's project has **no billing account** | 429 → templates |
 | Supabase | database | Free plan, no card (500 MB; we use a few MB a month) | it restricts the project; it doesn't bill |
 | Vercel | dashboard hosting | Hobby plan, no card | it pauses; it doesn't bill |
-| GitHub | private repo | free plan | n/a |
+| GitHub | public repo | free plan | n/a |
 | Telegram, Gmail API | alerts, email | always free | n/a |
 | Hunter.io (optional) | recruiter emails | Free plan (25 searches/month), no card | searches stop until next month |
 | Job sources | discovery | public pages/APIs, no accounts | a source is skipped that run |

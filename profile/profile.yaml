@@ -3,7 +3,7 @@
 # Synced with Deepanshu_Agarwal_Resume.pdf (Jake's format, October 2026).
 name: Deepanshu Agarwal
 email: deepanshuagarwal10b@gmail.com
-phone: "[phone removed]"
+phone: ""   # kept out of git: set PROFILE_PHONE in .env (the repo is public)
 links:
   linkedin: https://www.linkedin.com/in/deepanshu-agarwal-683b63320
   github: https://github.com/deepanshu214

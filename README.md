@@ -6,6 +6,8 @@ tracks replies. **Nothing is ever submitted or sent without your click.**
 
 Setup steps that need your accounts: **[SETUP_TONIGHT.md](SETUP_TONIGHT.md)**.
 
+Personal contact details and every key live in `.env` (git-ignored); `profile/profile.yaml` holds only resume content.
+
 ## How it fits together
 ```
  Mac worker (launchd, python -m worker.agent)                 Cloud
