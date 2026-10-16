@@ -34,7 +34,7 @@ def deps():
 
 def profile():
     p = config.PROFILE
-    missing = [x["name"].split(" — ")[0] for x in p["projects"] if not x.get("url")]
+    missing = [x["name"].split(" — ")[0] for x in p["projects"] if not x.get("url") and not x.get("note")]
     issues = []
     if not p["links"].get("linkedin"):
         issues.append("LinkedIn URL")
