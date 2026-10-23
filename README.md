@@ -1,5 +1,11 @@
 # InternPilot
 
+![Python](https://img.shields.io/badge/Python-3.11%20%7C%203.12-blue.svg)
+![Next.js](https://img.shields.io/badge/Next.js-14-black.svg)
+![Tests](https://img.shields.io/badge/tests-72%20passed-brightgreen.svg)
+![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Architecture](https://img.shields.io/badge/architecture-Microservice%20Worker-orange.svg)
+
 Personal internship copilot. It finds internships on every platform with a public feed, scores them against your
 profile, tailors a one-page resume per job, finds people to email and drafts the email, pre-fills applications, and
 tracks replies. **Nothing is ever submitted or sent without your click.**
@@ -49,7 +55,7 @@ Personal contact details and every key live in `.env` (git-ignored); `profile/pr
 ./scripts/install_launchd.sh                    # install/restart the worker in the background
 cd web && npm run dev                           # dashboard on http://localhost:3000
 .venv/bin/python scripts/doctor.py              # setup checker: ✅/❌ per step, free read-only calls
-.venv/bin/python -m pytest -q                   # 55 tests (TEST_DATABASE_URL=<local postgres> runs them on Postgres)
+.venv/bin/python -m pytest -q                   # 72 tests (TEST_DATABASE_URL=<local postgres> runs them on Postgres)
 ```
 
 ## Layout
